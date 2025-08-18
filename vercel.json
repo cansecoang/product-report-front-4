@@ -1,14 +1,12 @@
 {
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 10
+      "maxDuration": 30
     }
   },
-  "env": {
-    "DB_HOST": "@db_host",
-    "DB_PORT": "@db_port", 
-    "DB_NAME": "@db_name",
-    "DB_USER": "@db_user",
-    "DB_PASSWORD": "@db_password"
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
   }
 }
