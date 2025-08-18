@@ -1,12 +1,4 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'BioFincas',
-  password: '2261',
-  port: 5434,
-});
+import { pool } from './db';
 
 // Interfaces para TypeScript basadas en tu estructura real
 export interface WorkPackage {
