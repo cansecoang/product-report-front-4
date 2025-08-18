@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ProductSelectors } from "@/components/product-selectors";
 import { ProductDetailModal } from "@/components/product-detail-modal";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
 // Interfaces
@@ -42,10 +41,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
   const handleProductChange = (productId: string | null) => {
     console.log('Product selected:', productId);
     
-    // Fetch product info when selected
+    // Store in localStorage for other components to use
     if (productId) {
+      localStorage.setItem('selectedProductId', productId);
       fetchProductInfo(productId);
     } else {
+      localStorage.removeItem('selectedProductId');
       setSelectedProduct(null);
     }
   };
@@ -78,11 +79,10 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
     <div>
       {/* Barra superior con dos niveles como en el mockup */}
       <div className="bg-background border-b px-6 py-3">
-        {/* PRIMER NIVEL: Sidebar trigger + Products + Organización responsable */}
+        {/* PRIMER NIVEL: Products + Organización responsable */}
         <div className="flex items-center justify-between w-full mb-3">
-          {/* Lado izquierdo: Sidebar trigger + Products */}
+          {/* Lado izquierdo: Products */}
           <div className="flex items-center gap-4">
-            <SidebarTrigger />
             <h1 className="text-lg font-medium text-foreground">Products</h1>
           </div>
 
@@ -150,7 +150,7 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {selectedProduct && (
         <ProductDetailModal 
           product={selectedProduct}

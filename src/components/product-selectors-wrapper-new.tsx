@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ProductSelectors } from "@/components/product-selectors";
 import { ProductDetailModal } from "@/components/product-detail-modal";
+import AddProductModal from "@/components/add-product-modal";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
@@ -13,14 +14,31 @@ interface WorkPackage {
   description?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  objective?: string;
+  deliverable?: string;
+  deliveryDate?: string;
+  outputNumber?: string;
+  methodologyDescription?: string;
+  genderSpecificActions?: string;
+  nextSteps?: string;
+  workPackageId: string;
+  workPackageName?: string;
+  primaryOrganization?: string;
+  country?: string;
+}
+
 interface ProductSelectorsWrapperProps {
   initialWorkPackages: WorkPackage[];
 }
 
 export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelectorsWrapperProps) {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
   const handleWorkPackageChange = (workPackageId: string | null) => {
     console.log('Work Package selected:', workPackageId);
@@ -33,10 +51,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
     console.log('Product selected:', productId);
     setSelectedProductId(productId);
     
-    // Fetch product info when selected
+    // Store in localStorage for other components to use
     if (productId) {
+      localStorage.setItem('selectedProductId', productId);
       fetchProductInfo(productId);
     } else {
+      localStorage.removeItem('selectedProductId');
       setSelectedProduct(null);
     }
   };
@@ -51,6 +71,11 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
     } catch (error) {
       console.error('Error fetching product info:', error);
     }
+  };
+
+  const handleProductAdded = () => {
+    // Refresh the page or update the products list
+    window.location.reload();
   };
 
   const formatDate = (dateString?: string) => {
@@ -72,8 +97,20 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
             {/* Sidebar trigger (icono rojo en el mockup) */}
             <SidebarTrigger className="text-red-500" />
             
-            {/* Título Products */}
-            <h1 className="text-lg font-medium text-foreground">Products</h1>
+            {/* Título Platform */}
+            <h1 className="text-lg font-medium text-foreground">Platform</h1>
+            
+            {/* Botón Add Product */}
+            <Button 
+              onClick={() => setIsAddProductModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5"
+              size="sm"
+            >
+              + Add Product
+            </Button>
+            
+            {/* Enterprise Label */}
+            <h1 className="text-lg font-medium text-foreground">Enterprise</h1>
             
             {/* Dropdowns */}
             <div className="flex items-center gap-4">
@@ -119,7 +156,7 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {selectedProduct && (
         <ProductDetailModal 
           product={selectedProduct}
@@ -127,6 +164,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      <AddProductModal
+        isOpen={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
+        onProductAdded={handleProductAdded}
+      />
     </div>
   );
 }
