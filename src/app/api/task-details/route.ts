@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { pool } from '@/lib/db';
 
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'BioFincas',
-  password: '2261',
-  port: 5434,
-});
+
 
 export async function GET(request: NextRequest) {
   try {

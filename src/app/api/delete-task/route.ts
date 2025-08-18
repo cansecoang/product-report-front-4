@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { pool } from '@/lib/db';
 
 // Configuración de la base de datos
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'BioFincas',
-  password: '2261',
-  port: 5434,
-});
+
 
 export async function DELETE(request: NextRequest) {
   try {
