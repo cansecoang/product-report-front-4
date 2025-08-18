@@ -20,8 +20,8 @@ const mockWorkPackages = [
 
 export async function GET() {
   try {
-    // USANDO LA CONFIGURACIÓN DIRECTA COMO EN PRODUCT-TASKS
-    const result = await pool.query('SELECT id, name FROM work_packages ORDER BY name');
+    // USANDO LOS NOMBRES CORRECTOS DE LA BASE DE DATOS
+    const result = await pool.query('SELECT workpackage_id as id, workpackage_name as name FROM workpackages ORDER BY workpackage_name');
     const workPackages = result.rows.map(row => ({
       id: row.id.toString(),
       name: row.name

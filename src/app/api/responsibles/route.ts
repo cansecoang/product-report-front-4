@@ -11,10 +11,18 @@ const pool = new Pool({
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT id, name, email, phone, role FROM responsibles ORDER BY name');
+    const result = await pool.query(`
+      SELECT user_id as id, 
+             CONCAT(user_name, ' ', COALESCE(user_last_name, '')) as name, 
+             user_email as email, 
+             user_phone as phone,
+             'User' as role
+      FROM users 
+      ORDER BY user_name
+    `);
     const responsibles = result.rows.map(row => ({
       id: row.id,
-      name: row.name,
+      name: row.name.trim(),
       email: row.email,
       phone: row.phone,
       role: row.role

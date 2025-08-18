@@ -11,13 +11,12 @@ const pool = new Pool({
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT id, name, description, unit, target_value FROM indicators ORDER BY name');
+    const result = await pool.query('SELECT indicator_id as id, indicator_name as name, indicator_description as description FROM indicators ORDER BY indicator_name');
     const indicators = result.rows.map(row => ({
       id: row.id,
       name: row.name,
-      description: row.description,
-      unit: row.unit,
-      target_value: row.target_value
+      description: row.description || '',
+      unit: 'unit' // Campo genérico ya que no existe en la tabla
     }));
 
     return NextResponse.json({ indicators });

@@ -1,11 +1,12 @@
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'BioFincas',
-  password: '2261',
-  port: 5434,
+  user: process.env.DB_USER || 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'BioFincas',
+  password: process.env.DB_PASSWORD || '2261',
+  port: parseInt(process.env.DB_PORT || '5434'),
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 export async function query(text: string, params?: unknown[]) {

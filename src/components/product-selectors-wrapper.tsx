@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ProductSelectors } from "@/components/product-selectors";
 import { ProductDetailModal } from "@/components/product-detail-modal";
+import AddProductModal from "@/components/add-product-modal";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
 // Interfaces
@@ -31,6 +33,7 @@ interface ProductSelectorsWrapperProps {
 export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelectorsWrapperProps) {
   const [selectedProduct, setSelectedProduct] = useState<ProductInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
   const handleWorkPackageChange = (workPackageId: string | null) => {
     console.log('Work Package selected:', workPackageId);
@@ -49,6 +52,11 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
       localStorage.removeItem('selectedProductId');
       setSelectedProduct(null);
     }
+  };
+
+  const handleProductAdded = () => {
+    // Refresh the page or update the products list
+    window.location.reload();
   };
 
   const fetchProductInfo = async (productId: string) => {
@@ -79,10 +87,11 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
     <div>
       {/* Barra superior con dos niveles como en el mockup */}
       <div className="bg-background border-b px-6 py-3">
-        {/* PRIMER NIVEL: Products + Organización responsable */}
+        {/* PRIMER NIVEL: Sidebar trigger + Products + Organización responsable */}
         <div className="flex items-center justify-between w-full mb-3">
-          {/* Lado izquierdo: Products */}
+          {/* Lado izquierdo: Sidebar trigger + Products */}
           <div className="flex items-center gap-4">
+            <SidebarTrigger />
             <h1 className="text-lg font-medium text-foreground">Products</h1>
           </div>
 
@@ -96,15 +105,24 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
           </div>
         </div>
 
-        {/* SEGUNDO NIVEL: Dropdowns + Delivery Date + Country + Botón */}
+        {/* SEGUNDO NIVEL: Dropdowns + Add Product + Delivery Date + Country + Botón */}
         <div className="flex items-center justify-between w-full">
-          {/* Lado izquierdo: Dropdowns */}
+          {/* Lado izquierdo: Dropdowns + Add Product */}
           <div className="flex items-center gap-4">
             <ProductSelectors 
               initialWorkPackages={initialWorkPackages}
               onWorkPackageChange={handleWorkPackageChange}
               onProductChange={handleProductChange}
             />
+            
+            {/* Botón Add Product en el lugar correcto */}
+            <Button 
+              onClick={() => setIsAddProductModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5"
+              size="sm"
+            >
+              + Add Product
+            </Button>
           </div>
 
           {/* Lado derecho: Delivery Date + Country + Botón */}
@@ -158,6 +176,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      <AddProductModal
+        isOpen={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
+        onProductAdded={handleProductAdded}
+      />
     </div>
   );
 }

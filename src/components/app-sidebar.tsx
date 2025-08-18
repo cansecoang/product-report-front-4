@@ -34,17 +34,17 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "BioFincas",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
     {
-      name: "Acme Corp.",
+      name: "Ecoimpulso",
       logo: AudioWaveform,
       plan: "Startup",
     },
     {
-      name: "Evil Corp.",
+      name: "GreenWatersheds",
       logo: Command,
       plan: "Free",
     },

@@ -33,7 +33,7 @@ export const getWorkPackages = async (): Promise<WorkPackage[]> => {
     
     console.log('📋 Work packages obtenidos:', result.rows.length);
     
-    return result.rows.map((row: any) => ({
+    return result.rows.map((row: { workpackage_id: number; workpackage_name: string; workpackage_description: string }) => ({
       id: row.workpackage_id.toString(),
       name: row.workpackage_name,
       description: row.workpackage_description
@@ -60,7 +60,7 @@ export const getProductsByWorkPackage = async (workPackageId: string): Promise<P
     
     console.log(`📋 Products obtenidos para WP ${workPackageId}:`, result.rows.length);
     
-    return result.rows.map((row: any) => ({
+    return result.rows.map((row: { product_id: number; product_name: string; workpackage_id: number; product_objective: string }) => ({
       id: row.product_id.toString(),
       name: row.product_name,
       workPackageId: row.workpackage_id.toString(),
@@ -87,7 +87,7 @@ export const getAllProducts = async (): Promise<Product[]> => {
     
     console.log('📋 Total products obtenidos:', result.rows.length);
     
-    return result.rows.map((row: any) => ({
+    return result.rows.map((row: { product_id: number; product_name: string; workpackage_id?: number; product_objective: string }) => ({
       id: row.product_id.toString(),
       name: row.product_name,
       workPackageId: row.workpackage_id?.toString() || '0',

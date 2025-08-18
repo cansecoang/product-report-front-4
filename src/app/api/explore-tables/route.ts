@@ -5,39 +5,24 @@ export async function GET() {
   try {
     console.log('🔍 Explorando estructura de tablas...');
     
-    // Ver estructura de workpackages
-    const workpackagesStructure = await query(`
+    // Ver estructura de users para responsibles
+    const usersStructure = await query(`
       SELECT column_name, data_type, is_nullable, column_default
       FROM information_schema.columns 
-      WHERE table_name = 'workpackages' AND table_schema = 'public'
+      WHERE table_name = 'users' AND table_schema = 'public'
       ORDER BY ordinal_position
     `);
 
-    // Ver estructura de products
-    const productsStructure = await query(`
-      SELECT column_name, data_type, is_nullable, column_default
-      FROM information_schema.columns 
-      WHERE table_name = 'products' AND table_schema = 'public'
-      ORDER BY ordinal_position
-    `);
-
-    // Ver algunos datos de ejemplo de workpackages
-    const workpackagesData = await query('SELECT * FROM workpackages LIMIT 5');
-    
-    // Ver algunos datos de ejemplo de products
-    const productsData = await query('SELECT * FROM products LIMIT 5');
+    // Ver algunos datos de ejemplo de users
+    const usersData = await query('SELECT * FROM users LIMIT 5');
 
     return NextResponse.json({
       success: true,
-      workpackages: {
-        structure: workpackagesStructure.rows,
-        sampleData: workpackagesData.rows
+      users: {
+        structure: usersStructure.rows,
+        sampleData: usersData.rows
       },
-      products: {
-        structure: productsStructure.rows,
-        sampleData: productsData.rows
-      },
-      message: '✅ Estructura de tablas obtenida'
+      message: '✅ Estructura de tabla users obtenida'
     });
 
   } catch (error) {
