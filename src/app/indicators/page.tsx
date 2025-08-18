@@ -1,5 +1,5 @@
 export default function Page() {
   return (
-    <h1>Holaaaaaaaaaaaaa</h1>
+    <h1>Indicators Section</h1>
   )
 }
