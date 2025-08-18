@@ -4,9 +4,9 @@ import { Pool } from 'pg';
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
-  database: 'oroverde_dev',
-  password: 'postgres',
-  port: 5432,
+  database: 'BioFincas',
+  password: '2261',
+  port: 5434,
 });
 
 export async function GET(request: NextRequest) {
@@ -21,9 +21,8 @@ export async function GET(request: NextRequest) {
     // Get phases that have tasks for the specific product - las fases vienen de las tareas, no del producto
     const phasesQuery = `
       SELECT DISTINCT 
-        p.phase_id as id, 
-        p.phase_name as name, 
-        p.phase_id as order_index,
+        p.phase_id, 
+        p.phase_name, 
         COUNT(t.task_id) as task_count
       FROM tasks t
       INNER JOIN phases p ON p.phase_id = t.phase_id
@@ -34,8 +33,14 @@ export async function GET(request: NextRequest) {
     
     const phasesResult = await pool.query(phasesQuery, [productId]);
     
+    console.log(`📋 Fases obtenidas para producto ${productId}:`, phasesResult.rows.length);
+    
     return NextResponse.json({
-      phases: phasesResult.rows
+      phases: phasesResult.rows.map(row => ({
+        phase_id: row.phase_id,
+        phase_name: row.phase_name,
+        task_count: parseInt(row.task_count)
+      }))
     });
     
   } catch (error) {

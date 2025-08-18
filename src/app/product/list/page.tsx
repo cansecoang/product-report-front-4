@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import ColumnCustomizer from "@/components/column-customizer";
 import TaskDetailModal from "@/components/task-detail-modal";
+import AddTaskModal from "@/components/add-task-modal";
 
 // Interface para las tareas - usando la estructura exacta del query proporcionado
 interface Task {
@@ -41,6 +42,12 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
+interface Phase {
+  phase_id: number;
+  phase_name: string;
+  task_count: number;
+}
+
 export default function TasksListPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,9 +68,16 @@ export default function TasksListPage() {
   // Producto seleccionado (en producción vendrá del contexto o parámetros)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   
+  // Estados para las fases y filtrado
+  const [phases, setPhases] = useState<Phase[]>([]);
+  const [selectedPhaseId, setSelectedPhaseId] = useState<number | null>(null);
+  
   // Estado para el modal de detalle de tarea
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  
+  // Estado para el modal de agregar tarea
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
 
   const handleTaskClick = (taskId: number) => {
     setSelectedTaskId(taskId);
@@ -75,7 +89,23 @@ export default function TasksListPage() {
     setSelectedTaskId(null);
   };
 
-  const fetchTasks = useCallback(async (productId: string, page: number, sort: SortConfig) => {
+  const handleAddTaskClick = () => {
+    setIsAddTaskModalOpen(true);
+  };
+
+  const closeAddTaskModal = () => {
+    setIsAddTaskModalOpen(false);
+  };
+
+  const handleTaskAdded = () => {
+    // Recargar las tareas y fases cuando se agrega una nueva tarea
+    if (selectedProductId) {
+      fetchPhases(selectedProductId);
+      loadTasks(selectedProductId, currentPage, sortConfig, selectedPhaseId);
+    }
+  };
+
+  const fetchTasks = useCallback(async (productId: string, page: number, sort: SortConfig, phaseId: number | null = null) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -85,6 +115,10 @@ export default function TasksListPage() {
         sortBy: sort.key,
         sortOrder: sort.direction
       });
+
+      if (phaseId !== null) {
+        params.append('phaseId', phaseId.toString());
+      }
 
       const response = await fetch(`/api/product-tasks?${params}`);
       const data = await response.json();
@@ -99,11 +133,23 @@ export default function TasksListPage() {
     }
   }, []);
 
+  // Función para obtener las fases
+  const fetchPhases = useCallback(async (productId: string) => {
+    try {
+      const response = await fetch(`/api/product-phases?productId=${productId}`);
+      const data = await response.json();
+      setPhases(data.phases || []);
+    } catch (error) {
+      console.error('Error fetching phases:', error);
+      setPhases([]);
+    }
+  }, []);
+
   // Función para cargar tareas
-  const loadTasks = useCallback((productId: string, page: number = 1, sort: SortConfig = sortConfig) => {
-    console.log('🔄 Loading tasks for product:', productId, 'page:', page);
-    fetchTasks(productId, page, sort);
-  }, [fetchTasks, sortConfig]);
+  const loadTasks = useCallback((productId: string, page: number = 1, sort: SortConfig = sortConfig, phaseId: number | null = selectedPhaseId) => {
+    console.log('🔄 Loading tasks for product:', productId, 'page:', page, 'phase:', phaseId);
+    fetchTasks(productId, page, sort, phaseId);
+  }, [fetchTasks, sortConfig, selectedPhaseId]);
 
   // useEffect para detectar cambios en el producto seleccionado
   useEffect(() => {
@@ -114,9 +160,12 @@ export default function TasksListPage() {
         setSelectedProductId(productId);
         if (productId) {
           setCurrentPage(1); // Reset página al cambiar producto
-          loadTasks(productId, 1, sortConfig);
+          setSelectedPhaseId(null); // Reset filtro de fase
+          fetchPhases(productId); // Cargar fases disponibles
+          loadTasks(productId, 1, sortConfig, null); // Cargar todas las tareas
         } else {
           setTasks([]); // Limpiar tareas si no hay producto
+          setPhases([]); // Limpiar fases si no hay producto
         }
       }
     };
@@ -138,7 +187,16 @@ export default function TasksListPage() {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [selectedProductId, sortConfig, loadTasks]);
+  }, [selectedProductId, sortConfig, loadTasks, fetchPhases]);
+
+  // Función para manejar el cambio de fase
+  const handlePhaseChange = (phaseId: number | null) => {
+    setSelectedPhaseId(phaseId);
+    setCurrentPage(1); // Reset página al cambiar filtro
+    if (selectedProductId) {
+      loadTasks(selectedProductId, 1, sortConfig, phaseId);
+    }
+  };
 
   const handleSort = (columnKey: string) => {
     const newDirection: 'asc' | 'desc' = sortConfig.key === columnKey && sortConfig.direction === 'asc' ? 'desc' : 'asc';
@@ -191,19 +249,65 @@ export default function TasksListPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Controles de tabla */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Task List</h1>
-        
-        {/* Customizador de columnas */}
-        <ColumnCustomizer columns={columns} onColumnsChange={setColumns} />
+    <div className="space-y-4">
+      {/* Pestañas de filtrado por fase */}
+      <div className="flex items-center justify-between">
+        {/* Pestañas de fases */}
+        <div className="flex items-center space-x-1">
+          {/* Pestaña "All" */}
+          <button
+            onClick={() => handlePhaseChange(null)}
+            className={`px-6 py-2 text-sm font-medium border-b-2 transition-colors ${
+              selectedPhaseId === null
+                ? 'text-blue-600 border-blue-600'
+                : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            Outline
+            <span className="ml-2 text-xs bg-gray-200 px-2 py-1 rounded-full">
+              {tasks.length}
+            </span>
+          </button>
+          
+          {/* Pestañas de fases */}
+          {phases.map((phase) => (
+            <button
+              key={phase.phase_id}
+              onClick={() => handlePhaseChange(phase.phase_id)}
+              className={`px-6 py-2 text-sm font-medium border-b-2 transition-colors ${
+                selectedPhaseId === phase.phase_id
+                  ? 'text-blue-600 border-blue-600'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              }`}
+            >
+              {phase.phase_name}
+              <span className="ml-2 text-xs bg-gray-200 px-2 py-1 rounded-full">
+                {phase.task_count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Controles de la derecha */}
+        <div className="flex items-center gap-2">
+          {/* Customize Columns */}
+          <ColumnCustomizer columns={columns} onColumnsChange={setColumns} />
+          
+          {/* Add Task Button */}
+          <Button
+            onClick={handleAddTaskClick}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+          >
+            + Add Task
+          </Button>
+        </div>
       </div>
 
       {/* Tabla de tareas */}
       <div className="border rounded-lg overflow-hidden">
-        {/* Header de tabla (cuadro verde) */}
-        <div className="bg-green-50 border-b border-green-200">
+        {/* Header de tabla */}
+        <div className="bg-gray-50 border-b">
           <div className="grid gap-4 p-4" style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, 1fr)` }}>
             {visibleColumns.map((column) => (
               <button
@@ -323,6 +427,16 @@ export default function TasksListPage() {
         taskId={selectedTaskId}
         isOpen={isTaskModalOpen}
         onClose={closeTaskModal}
+        onTaskUpdated={handleTaskAdded}
+        onTaskDeleted={handleTaskAdded}
+      />
+
+      {/* Modal de agregar tarea */}
+      <AddTaskModal
+        isOpen={isAddTaskModalOpen}
+        onClose={closeAddTaskModal}
+        productId={selectedProductId}
+        onTaskAdded={handleTaskAdded}
       />
     </div>
   );

@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('productId');
+    const phaseId = searchParams.get('phaseId');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const sortBy = searchParams.get('sortBy') || 'start_planned';
@@ -65,21 +66,30 @@ export async function GET(request: NextRequest) {
       LEFT JOIN status        s ON s.status_id       = t.status_id
       LEFT JOIN organizations o ON o.organization_id = t.responsable_id
       LEFT JOIN products      z ON z.product_id      = t.product_id
-      WHERE t.product_id = $1
+      WHERE t.product_id = $1 ${phaseId ? 'AND t.phase_id = $3' : ''}
       ORDER BY ${orderByColumn} ${sortOrder.toUpperCase()} NULLS LAST, t.task_id
-      LIMIT $2 OFFSET $3
+      LIMIT $2 OFFSET ${phaseId ? '$4' : '$3'}
     `;
     
     // Query para contar el total de tareas
     const countQuery = `
       SELECT COUNT(*) as total
       FROM tasks t
-      WHERE t.product_id = $1
+      WHERE t.product_id = $1 ${phaseId ? 'AND t.phase_id = $2' : ''}
     `;
     
+    // Preparar parámetros según si hay filtro de fase o no
+    const taskParams = phaseId 
+      ? [productId, limit, phaseId, offset]
+      : [productId, limit, offset];
+    
+    const countParams = phaseId 
+      ? [productId, phaseId]
+      : [productId];
+    
     const [tasksResult, countResult] = await Promise.all([
-      pool.query(query, [productId, limit, offset]),
-      pool.query(countQuery, [productId])
+      pool.query(query, taskParams),
+      pool.query(countQuery, countParams)
     ]);
     
     const totalTasks = parseInt(countResult.rows[0].total);
