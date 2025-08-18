@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface Task {
   id: number;
@@ -37,7 +36,7 @@ interface TaskDetailModalProps {
   onTaskDeleted?: () => void;
 }
 
-function TaskDetailModal({ taskId, isOpen, onClose, onTaskUpdated, onTaskDeleted }: TaskDetailModalProps) {
+function TaskDetailModal({ taskId, isOpen, onClose, onTaskDeleted }: TaskDetailModalProps) {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -90,35 +89,6 @@ function TaskDetailModal({ taskId, isOpen, onClose, onTaskUpdated, onTaskDeleted
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleSave = async (updatedTask: Task) => {
-    try {
-      const response = await fetch(`/api/update-task`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTask),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTask(data.task);
-        setIsEditing(false);
-        onTaskUpdated?.();
-      } else {
-        console.error('Error updating task');
-        alert('Failed to update task. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error updating task:', error);
-      alert('Failed to update task. Please try again.');
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
   };
 
   const formatDate = (dateString?: string) => {

@@ -1,4 +1,4 @@
-import { getWorkPackages, getProductsByWorkPackage, WorkPackage, Product } from '@/lib/data-access';
+import { getWorkPackages } from '@/lib/data-access';
 import { ProductSelectors } from "@/components/product-selectors";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";

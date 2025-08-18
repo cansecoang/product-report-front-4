@@ -35,7 +35,7 @@ interface ProductSelectorsWrapperProps {
 }
 
 export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelectorsWrapperProps) {
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [, setSelectedProductId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);

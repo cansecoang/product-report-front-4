@@ -123,6 +123,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
     const width = totalDays * dayWidth;
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     x = d3.scaleTime().domain([startDate, endDate]).range([0, width]);
 
     // Ordenar por fecha de inicio planeada
