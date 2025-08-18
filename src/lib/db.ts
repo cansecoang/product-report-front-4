@@ -14,7 +14,9 @@ const pool = new Pool(
         password: process.env.DB_PASSWORD || '2261',
         port: parseInt(process.env.DB_PORT || '5434'),
         // Para Render y otras bases de datos en la nube, siempre usar SSL
-        ssl: process.env.DB_HOST?.includes('render.com') || process.env.DB_HOST?.includes('postgres') 
+        ssl: process.env.DB_HOST?.includes('render.com') || 
+             process.env.DB_HOST?.includes('postgres') ||
+             process.env.DB_HOST?.includes('frankfurt-postgres')
           ? { rejectUnauthorized: false } 
           : false,
       }
