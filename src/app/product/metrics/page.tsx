@@ -43,7 +43,7 @@ interface MetricsData {
 
 export default function MetricsPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Cambio: iniciar en false
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [metricsData, setMetricsData] = useState<MetricsData>({
     productProgress: [],
@@ -176,18 +176,22 @@ export default function MetricsPage() {
     setMetricsData(newMetricsData);
   }, [tasks]);
 
-  if (loading) {
+  // Verificar primero si no hay producto seleccionado
+  if (!selectedProductId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Cargando métricas...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-lg font-medium mb-2">No hay producto seleccionado</h2>
+          <p className="text-muted-foreground">Selecciona un producto del menú superior para ver las métricas.</p>
+        </div>
       </div>
     );
   }
 
-  if (!selectedProductId) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Selecciona un producto para ver las métricas</div>
+        <div className="text-gray-500">Cargando métricas...</div>
       </div>
     );
   }
@@ -202,16 +206,6 @@ export default function MetricsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Métricas - Producto {selectedProductId}
-          </h1>
-          <p className="text-gray-600">
-            {tasks.length} tareas analizadas
-          </p>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pie Chart - Product Progress */}
           <div className="bg-white rounded-xl shadow p-4">
@@ -280,7 +274,6 @@ export default function MetricsPage() {
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function DynamicPageHeader() {
   };
 
   return (
-    <div className="bg-background border-b px-6 py-3">
+    <div className="bg-background border-b px-2 py-2">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <h1 className="text-lg font-medium text-foreground">{getTitle()}</h1>

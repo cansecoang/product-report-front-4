@@ -513,9 +513,8 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-lg relative">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Gantt Chart by Phases</h2>
+    <div className="h-full bg-white flex flex-col relative">
+      <div className="flex justify-between items-center pl-4 pr-4 pb-4 border-b">
         <div className="space-x-2">
           <button 
             onClick={scrollToToday} 
@@ -553,7 +552,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         </div>
       </div>
       
-      <div className="flex border rounded-md overflow-hidden">
+      <div className="flex flex-1 border-t overflow-hidden">
         <div className="bg-white border-r" style={{ minWidth: "250px" }}>
           <svg ref={fixedRef}></svg>
         </div>

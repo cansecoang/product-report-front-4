@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import ColumnCustomizer from "@/components/column-customizer";
 import TaskDetailModal from "@/components/task-detail-modal";
-import AddTaskModal from "@/components/add-task-modal";
 
 // Interface para las tareas - usando la estructura exacta del query proporcionado
 interface Task {
@@ -71,13 +70,11 @@ export default function TasksListPage() {
   // Estados para las fases y filtrado
   const [phases, setPhases] = useState<Phase[]>([]);
   const [selectedPhaseId, setSelectedPhaseId] = useState<number | null>(null);
+  const [totalTasks, setTotalTasks] = useState(0); // Para almacenar el total real
   
   // Estado para el modal de detalle de tarea
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  
-  // Estado para el modal de agregar tarea
-  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
 
   const handleTaskClick = (taskId: number) => {
     setSelectedTaskId(taskId);
@@ -87,14 +84,6 @@ export default function TasksListPage() {
   const closeTaskModal = () => {
     setIsTaskModalOpen(false);
     setSelectedTaskId(null);
-  };
-
-  const handleAddTaskClick = () => {
-    setIsAddTaskModalOpen(true);
-  };
-
-  const closeAddTaskModal = () => {
-    setIsAddTaskModalOpen(false);
   };
 
   const handleTaskAdded = () => {
@@ -125,11 +114,28 @@ export default function TasksListPage() {
       
       setTasks(data.tasks || []);
       setTotalPages(data.pagination?.totalPages || 1);
+      
+      // Si no hay filtro de fase, también actualizamos el total de tareas
+      if (phaseId === null) {
+        setTotalTasks(data.pagination?.totalCount || data.tasks?.length || 0);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setTasks([]);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Función para obtener el total de tareas sin filtro de fase
+  const fetchTotalTasks = useCallback(async (productId: string) => {
+    try {
+      const response = await fetch(`/api/product-tasks?productId=${productId}&page=1&limit=1`);
+      const data = await response.json();
+      setTotalTasks(data.pagination?.totalCount || 0);
+    } catch (error) {
+      console.error('Error fetching total tasks:', error);
+      setTotalTasks(0);
     }
   }, []);
 
@@ -162,10 +168,12 @@ export default function TasksListPage() {
           setCurrentPage(1); // Reset página al cambiar producto
           setSelectedPhaseId(null); // Reset filtro de fase
           fetchPhases(productId); // Cargar fases disponibles
+          fetchTotalTasks(productId); // Obtener total de tareas
           loadTasks(productId, 1, sortConfig, null); // Cargar todas las tareas
         } else {
           setTasks([]); // Limpiar tareas si no hay producto
           setPhases([]); // Limpiar fases si no hay producto
+          setTotalTasks(0); // Limpiar total de tareas
         }
       }
     };
@@ -187,7 +195,7 @@ export default function TasksListPage() {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [selectedProductId, sortConfig, loadTasks, fetchPhases]);
+  }, [selectedProductId, sortConfig, loadTasks, fetchPhases, fetchTotalTasks]);
 
   // Función para manejar el cambio de fase
   const handlePhaseChange = (phaseId: number | null) => {
@@ -241,8 +249,8 @@ export default function TasksListPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h2 className="text-lg font-medium mb-2">No Product Selected</h2>
-          <p className="text-muted-foreground">Please select a product from the dropdown above to view tasks.</p>
+          <h2 className="text-lg font-medium mb-2">No hay producto seleccionado</h2>
+          <p className="text-muted-foreground">Selecciona un producto del menú superior para ver las tareas.</p>
         </div>
       </div>
     );
@@ -265,7 +273,7 @@ export default function TasksListPage() {
           >
             Outline
             <span className="ml-2 text-xs bg-gray-200 px-2 py-1 rounded-full">
-              {tasks.length}
+              {totalTasks}
             </span>
           </button>
           
@@ -292,15 +300,6 @@ export default function TasksListPage() {
         <div className="flex items-center gap-2">
           {/* Customize Columns */}
           <ColumnCustomizer columns={columns} onColumnsChange={setColumns} />
-          
-          {/* Add Task Button */}
-          <Button
-            onClick={handleAddTaskClick}
-            className="bg-green-600 hover:bg-green-700 text-white"
-            size="sm"
-          >
-            + Add Task
-          </Button>
         </div>
       </div>
 
@@ -429,14 +428,6 @@ export default function TasksListPage() {
         onClose={closeTaskModal}
         onTaskUpdated={handleTaskAdded}
         onTaskDeleted={handleTaskAdded}
-      />
-
-      {/* Modal de agregar tarea */}
-      <AddTaskModal
-        isOpen={isAddTaskModalOpen}
-        onClose={closeAddTaskModal}
-        productId={selectedProductId}
-        onTaskAdded={handleTaskAdded}
       />
     </div>
   );

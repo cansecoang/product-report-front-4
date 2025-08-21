@@ -16,9 +16,11 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 
 export function NavMain({
   items,
@@ -36,6 +38,33 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  const { setOpen, state } = useSidebar()
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set())
+  
+  // Inicializar elementos abiertos basado en la ruta activa
+  useEffect(() => {
+    const activeItems = new Set<string>()
+    items.forEach(item => {
+      const isItemActive = pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url + '/'))
+      if (isItemActive && item.items && item.items.length > 0) {
+        activeItems.add(item.title)
+      }
+    })
+    setOpenItems(activeItems)
+  }, [pathname, items])
+  
+  const handleLinkClick = () => {
+    setOpen(false)
+  }
+
+  const handleCollapsibleClick = (itemTitle: string, hasSubItems: boolean) => {
+    // Si la sidebar está collapsed y el item tiene sub-items, abrimos la sidebar
+    if (state === "collapsed" && hasSubItems) {
+      setOpen(true)
+      // También abrimos el elemento específico
+      setOpenItems(prev => new Set([...prev, itemTitle]))
+    }
+  }
   
   return (
     <SidebarGroup>
@@ -44,12 +73,24 @@ export function NavMain({
         {items.map((item) => {
           const isItemActive = pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url + '/'))
           const hasSubItems = item.items && item.items.length > 0
+          const isItemOpen = openItems.has(item.title) || isItemActive
           
           return (
             <Collapsible
               key={item.title}
               asChild={hasSubItems}
-              defaultOpen={isItemActive}
+              open={isItemOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setOpenItems(prev => new Set([...prev, item.title]))
+                } else {
+                  setOpenItems(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(item.title)
+                    return newSet
+                  })
+                }
+              }}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -59,6 +100,7 @@ export function NavMain({
                       <SidebarMenuButton 
                         tooltip={item.title}
                         isActive={isItemActive}
+                        onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
                       >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
@@ -70,7 +112,7 @@ export function NavMain({
                         {item.items?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                              <Link href={subItem.url}>
+                              <Link href={subItem.url} onClick={handleLinkClick}>
                                 {subItem.icon && <subItem.icon />}
                                 <span>{subItem.title}</span>
                               </Link>
@@ -86,7 +128,7 @@ export function NavMain({
                     tooltip={item.title}
                     isActive={isItemActive}
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleLinkClick}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </Link>

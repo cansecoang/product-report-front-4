@@ -19,7 +19,7 @@ export default async function ProductLayout({
       />
       
       {/* Contenido principal */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 px-6 py-4 overflow-auto">
         {children}
       </div>
     </div>

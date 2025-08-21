@@ -17,7 +17,6 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
@@ -32,7 +31,7 @@ const data = {
   user: {
     name: "Admin BioFincas",
     email: "admin@biofincas.org",
-    avatar: "/avatars/biofincas.jpg",
+    avatar: "https://github.com/shadcn.png",
   },
   teams: [
     {
@@ -58,22 +57,22 @@ const data = {
       icon: Home,
     },
     {
-      title: "Productos",
+      title: "Products",
       url: "/product",
       icon: SquareTerminal,
       items: [
         {
-          title: "Lista de Productos",
+          title: "Task Table",
           url: "/product/list",
           icon: ListChecks,
         },
         {
-          title: "Cronograma Gantt",
+          title: "Gantt Chart",
           url: "/product/gantt",
           icon: Calendar,
         },
         {
-          title: "Métricas",
+          title: "Metrics",
           url: "/product/metrics",
           icon: BarChart3,
         },
@@ -96,26 +95,26 @@ const data = {
         },
       ],
     },
-    {
-      title: "Configuración",
-      url: "/settings",
-      icon: Settings,
-      items: [
-        {
-          title: "Organizaciones",
-          url: "/settings/organizations",
-          icon: BookOpen,
-        },
-        {
-          title: "Estados",
-          url: "/settings/statuses",
-        },
-        {
-          title: "Fases",
-          url: "/settings/phases",
-        },
-      ],
-    },
+    // {
+    //   title: "Configuración",
+    //   url: "/settings",
+    //   icon: Settings,
+    //   items: [
+    //     {
+    //       title: "Organizaciones",
+    //       url: "/settings/organizations",
+    //       icon: BookOpen,
+    //     },
+    //     {
+    //       title: "Estados",
+    //       url: "/settings/statuses",
+    //     },
+    //     {
+    //       title: "Fases",
+    //       url: "/settings/phases",
+    //     },
+    //   ],
+    // },
   ],
   // projects: [
   //   {
@@ -138,17 +137,15 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" className="border-r border-green-200 dark:border-green-800 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50" {...props}>
-      <SidebarHeader className="border-b border-green-200 dark:border-green-800 bg-white/50 dark:bg-green-900/20">
+    <Sidebar collapsible="icon" className="border-r border-gray-300 dark:border-green-800 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50" {...props}>
+      <SidebarHeader className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent className="px-2 py-4">
         <NavMain items={data.navMain} />
       </SidebarContent>
-      <SidebarFooter className="border-t border-green-200 dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
-        <NavUser user={data.user} />
+      <SidebarFooter className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

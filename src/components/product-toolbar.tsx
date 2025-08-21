@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductSelectors } from "@/components/product-selectors";
 import { ProductDetailModal } from "@/components/product-detail-modal";
 import AddProductModal from "@/components/add-product-modal";
+import AddTaskModal from "@/components/add-task-modal";
 import { Button } from "@/components/ui/button";
 
 // Interfaces
@@ -30,9 +31,19 @@ interface ProductToolbarProps {
 }
 
 export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
+  // 🔍 IDENTIFICADOR TEMPORAL - ELIMINAR DESPUÉS  
+  console.log('🔧 ProductToolbar component loaded');
+  
   const [selectedProduct, setSelectedProduct] = useState<ProductInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+  // Limpiar localStorage al inicializar para que no haya productos pre-seleccionados
+  useEffect(() => {
+    localStorage.removeItem('selectedProductId');
+    setSelectedProduct(null);
+  }, []);
 
   const handleWorkPackageChange = (workPackageId: string | null) => {
     console.log('Work Package selected:', workPackageId);
@@ -70,6 +81,19 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
     console.log('Product added, refreshing...');
   };
 
+  const handleAddTaskClick = () => {
+    setIsAddTaskModalOpen(true);
+  };
+
+  const closeAddTaskModal = () => {
+    setIsAddTaskModalOpen(false);
+  };
+
+  const handleTaskAdded = () => {
+    // Refresh or handle task addition
+    console.log('Task added, refreshing...');
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No Date';
     
@@ -83,27 +107,18 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   return (
     <>
       {/* Product-specific toolbar below the main header */}
-      <div className="bg-background border-b px-6 py-3">
+      <div data-component="ProductToolbar" className="bg-background border-b px-3 py-3">
         <div className="flex items-center justify-between w-full">
-          {/* Lado izquierdo: Dropdowns + Add Product */}
+          {/* Lado izquierdo: Dropdowns solamente */}
           <div className="flex items-center gap-4">
             <ProductSelectors 
               initialWorkPackages={initialWorkPackages}
               onWorkPackageChange={handleWorkPackageChange}
               onProductChange={handleProductChange}
             />
-            
-            {/* Botón Add Product */}
-            <Button 
-              onClick={() => setIsAddProductModalOpen(true)}
-              className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5"
-              size="sm"
-            >
-              + Add Product
-            </Button>
           </div>
 
-          {/* Lado derecho: Delivery Date + Country + Botón */}
+          {/* Lado derecho: Delivery Date + Country + Add Product + Add Task */}
           <div className="flex items-center gap-6">
             {selectedProduct && (
               <>
@@ -133,13 +148,34 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
               </>
             )}
             
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Botón Add Product */}
+              <Button 
+                onClick={() => setIsAddProductModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5"
+                size="sm"
+              >
+                + Add Product
+              </Button>
+
+              {/* Botón Add Task */}
+              <Button 
+                onClick={handleAddTaskClick}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5"
+                size="sm"
+              >
+                + Add Task
+              </Button>
+            </div>
+
             {/* View Details Button */}
             {selectedProduct && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-gray-600 hover:bg-gray-700 text-white"
               >
-                View Details
+                Details
               </Button>
             )}
           </div>
@@ -159,6 +195,13 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
         onProductAdded={handleProductAdded}
+      />
+
+      <AddTaskModal
+        isOpen={isAddTaskModalOpen}
+        onClose={closeAddTaskModal}
+        productId={selectedProduct?.id?.toString() || null}
+        onTaskAdded={handleTaskAdded}
       />
     </>
   );

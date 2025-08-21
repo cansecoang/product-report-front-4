@@ -16,25 +16,9 @@ import {
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-8">
-      {/* Action buttons */}
-      <div className="flex justify-end items-center space-x-2">
-        <Button variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualizar
-        </Button>
-        <Button variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar
-        </Button>
-      </div>
+    <div className="space-y-8 px-6 py-4">
 
-      {/* Header description */}
-      <div className="space-y-2">
-        <p className="text-muted-foreground">
-          Análisis avanzado de indicadores y métricas de biodiversidad
-        </p>
-      </div>
+     
 
       {/* KPIs Analytics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

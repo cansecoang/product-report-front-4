@@ -29,7 +29,7 @@ interface Task {
 
 export default function GanttPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Cambio: iniciar en false
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Fetch tasks para el producto seleccionado - igual que en la página de lista
@@ -95,41 +95,37 @@ export default function GanttPage() {
     }
   };
 
-  if (loading) {
+  // Verificar primero si no hay producto seleccionado
+  if (!selectedProductId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Cargando tareas para el gantt chart...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-lg font-medium mb-2">No hay producto seleccionado</h2>
+          <p className="text-muted-foreground">Selecciona un producto del menú superior para ver el gantt chart.</p>
+        </div>
       </div>
     );
   }
 
-  if (!selectedProductId) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Selecciona un producto para ver el gantt chart</div>
+      <div className="h-full bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Cargando tareas para el gantt chart...</div>
       </div>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="h-full bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">No hay tareas para mostrar en el gantt chart</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gantt Chart - Producto {selectedProductId}
-          </h1>
-          <p className="text-gray-600">
-            {tasks.length} tareas encontradas
-          </p>
-        </div>
+    <div className="h-full bg-gray-50 overflow-hidden">
+      <div className="h-full">
         <GanttChart tasks={tasks} refreshData={refreshData} />
       </div>
     </div>
