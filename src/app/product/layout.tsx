@@ -1,6 +1,6 @@
 // Server Component - se ejecuta en el servidor
 import "../globals.css";
-import { ProductSelectorsWrapper } from "@/components/product-selectors-wrapper";
+import { ProductToolbar } from "@/components/product-toolbar";
 import { getWorkPackages } from '@/lib/data-access';
 
 export default async function ProductLayout({
@@ -13,8 +13,8 @@ export default async function ProductLayout({
   
   return (
     <div className="flex h-screen flex-col">
-      {/* Header integrado que abarque toda la parte superior */}
-      <ProductSelectorsWrapper 
+      {/* Product-specific toolbar (no header, just functionality) */}
+      <ProductToolbar 
         initialWorkPackages={workPackages}
       />
       

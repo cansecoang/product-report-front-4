@@ -4,17 +4,19 @@ import * as React from "react"
 import {
   AudioWaveform,
   BookOpen,
-  //Bot,
   Command,
-  //Frame,
-  GalleryVerticalEnd,
-  //Map,
-  //PieChart,
   SquareTerminal,
+  Home,
+  BarChart3,
+  Settings,
+  Leaf,
+  Target,
+  Calendar,
+  ListChecks,
+  TrendingUp
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-// import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
@@ -25,77 +27,92 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Data optimizada para BioFincas
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Admin BioFincas",
+    email: "admin@biofincas.org",
+    avatar: "/avatars/biofincas.jpg",
   },
   teams: [
     {
       name: "BioFincas",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      logo: Leaf,
+      plan: "Sostenibilidad",
     },
     {
-      name: "Ecoimpulso",
+      name: "EcoImpulso",
       logo: AudioWaveform,
-      plan: "Startup",
+      plan: "Biodiversidad",
     },
     {
-      name: "GreenWatersheds",
+      name: "AguaVerde",
       logo: Command,
-      plan: "Free",
+      plan: "Cuencas",
     },
   ],
   navMain: [
     {
-      title: "Indicators",
-      url: "/indicators",
+      title: "Dashboard",
+      url: "/",
+      icon: Home,
+    },
+    {
+      title: "Productos",
+      url: "/product",
       icon: SquareTerminal,
       items: [
         {
-          title: "Metrics",
-          url: "/indicators/metrics",
+          title: "Lista de Productos",
+          url: "/product/list",
+          icon: ListChecks,
+        },
+        {
+          title: "Cronograma Gantt",
+          url: "/product/gantt",
+          icon: Calendar,
+        },
+        {
+          title: "Métricas",
+          url: "/product/metrics",
+          icon: BarChart3,
         },
       ],
     },
-    // {
-    //   title: "Workpackages",
-    //   url: "#",
-    //   icon: Bot,
-    //   items: [
-    //     {
-    //       title: "Genesis",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Explorer",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Quantum",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
     {
-      title: "Products",
-      url: "/product",
-      icon: BookOpen,
+      title: "Analytics",
+      url: "/analytics",
+      icon: BarChart3,
+    },
+    {
+      title: "Indicadores",
+      url: "/indicators",
+      icon: Target,
       items: [
         {
-          title: "Gantt Chart",
-          url: "/product/gantt",
+          title: "Métricas de Rendimiento",
+          url: "/indicators/metrics",
+          icon: TrendingUp,
+        },
+      ],
+    },
+    {
+      title: "Configuración",
+      url: "/settings",
+      icon: Settings,
+      items: [
+        {
+          title: "Organizaciones",
+          url: "/settings/organizations",
+          icon: BookOpen,
         },
         {
-          title: "List",
-          url: "/product/list",
+          title: "Estados",
+          url: "/settings/statuses",
         },
         {
-          title: "Metrics",
-          url: "/product/metrics",
+          title: "Fases",
+          url: "/settings/phases",
         },
       ],
     },
@@ -121,15 +138,14 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="icon" className="border-r border-green-200 dark:border-green-800 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50" {...props}>
+      <SidebarHeader className="border-b border-green-200 dark:border-green-800 bg-white/50 dark:bg-green-900/20">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-2 py-4">
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-green-200 dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
         <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />

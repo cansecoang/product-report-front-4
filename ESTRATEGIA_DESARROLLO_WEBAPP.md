@@ -593,3 +593,66 @@ Para implementar esta estrategia de desarrollo:
 *Documento generado: 19 de Agosto, 2025*  
 *Versión: 1.0*  
 *Autor: Asistente de Desarrollo BioFincas*
+
+Te ayudo a crear consultas SQL y charts para maximizar la visualización de indicadores en tu sistema. Primero voy a revisar tu estructura de base de datos actual para entender mejor los datos disponibles.
+
+Read database-setup.sql, lines 1 to 50
+
+Read database-setup.sql, lines 51 to 66
+
+Ahora voy a revisar las tablas adicionales que tienes para entender mejor los indicadores disponibles:
+
+Searched codebase for "table structure tasks status organization responsible phase indicators", 13 results
+Ahora voy a revisar los endpoints de indicadores para entender la estructura completa:
+
+Read route.ts
+
+Perfecto! Ahora tengo una comprensión clara de tu base de datos. Voy a crear 6+ consultas SQL estratégicas y sus respectivos charts para maximizar la visualización de indicadores en tu sistema BioFincas:
+
+Created CONSULTAS_INDICADORES_CHARTS.md
+
+¡Perfecto! Te he creado un documento completo con 8 consultas SQL estratégicas y sus respectivos charts/visualizaciones para maximizar el aprovechamiento de los indicadores en tu sistema BioFincas.
+
+🎯 RESUMEN DE LOS 8 CHARTS CREADOS:
+1. 📈 Dashboard de Rendimiento General
+Query: Rendimiento por Work Package
+Chart: Bar Chart multi-métrico
+Métricas: Productos, tareas completadas, organizaciones, eficiencia
+2. 🔄 Timeline de Progreso por Indicadores
+Query: Progreso mensual por indicador
+Chart: Line Chart multi-series
+Métricas: Tareas creadas/completadas, tiempo promedio
+3. 🎯 Matriz de Impacto vs Progreso
+Query: Impacto por organización e indicador
+Chart: Scatter Plot (Bubble Chart)
+Métricas: Eficiencia, productos gestionados, nivel de impacto
+4. 📅 Análisis de Retrasos y Predicciones
+Query: Retrasos y predicción de riesgos
+Chart: Heatmap + Alert Dashboard
+Métricas: Tareas vencidas, riesgo futuro, alertas
+5. 🌍 Impacto Territorial y Organizacional
+Query: Participación por organización
+Chart: Radar Chart
+Métricas: Productos, tareas, participación, cobertura
+6. 📊 Análisis de Eficiencia por Fases
+Query: Eficiencia por fase del proyecto
+Chart: Combo Chart (Bar + Line)
+Métricas: Tareas totales/completadas, duración, tasa de completado
+7. 🎭 Análisis de Género y Diversidad
+Query: Participación por género
+Chart: Donut Chart + Bar Chart
+Métricas: Distribución por género, tasa de completado, comunicación
+8. 📈 Predicción y Tendencias Futuras
+Query: Análisis predictivo con tendencias
+Chart: Area Chart con predicciones
+Métricas: Tendencias históricas, predicciones, crecimiento
+🚀 VALOR AGREGADO DE ESTOS CHARTS:
+✅ Visión 360° del proyecto ✅ Predicciones basadas en datos ✅ Alertas tempranas de riesgos ✅ Análisis de diversidad e inclusión ✅ Métricas de impacto territorial ✅ Optimización de recursos y tiempo
+
+🎯 SIGUIENTE PASO RECOMENDADO:
+¿Te gustaría que implemente alguno de estos charts específicos? Por ejemplo:
+
+Crear el API endpoint para el Dashboard de Rendimiento
+Implementar el componente React del Timeline de Indicadores
+Configurar la página completa de Analytics Dashboard
+¿Por cuál prefieres empezar? 🚀
