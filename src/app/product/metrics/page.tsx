@@ -1,188 +1,147 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   Legend,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
+  RadialBarChart,
+  RadialBar
 } from "recharts";
 
-interface Task {
-  id: number;
-  name: string;
-  start_planned?: string;
-  end_planned?: string;
-  start_actual?: string;
-  end_actual?: string;
-  phase_id: number;
-  phase_name?: string;
-  status_id: number;
-  status_name?: string;
-  created_at: string;
-  updated_at: string;
+interface ProductSummary {
+  product_name: string;
+  total_tasks: string;
+  completed_tasks: string;
+  in_progress_tasks: string;
+  pending_tasks: string;
+  completion_percentage: string;
 }
 
-interface MetricsData {
-  productProgress: Array<{ name: string; value: number }>;
-  statusSummary: Array<{ status: string; count: number }>;
-  progressTimeline: Array<{ name: string; progress: number }>;
-  phaseDistribution: Array<{ name: string; value: number }>;
+interface StatusDistribution {
+  name: string;
+  value: string;
+  percentage: string;
+}
+
+interface ChartStatusData {
+  name: string;
+  value: number;
+  percentage: number;
 }
 
 export default function MetricsPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false); // Cambio: iniciar en false
+  const [loading, setLoading] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [metricsData, setMetricsData] = useState<MetricsData>({
-    productProgress: [],
-    statusSummary: [],
-    progressTimeline: [],
-    phaseDistribution: []
-  });
+  const [productSummary, setProductSummary] = useState<ProductSummary | null>(null);
+  const [statusDistribution, setStatusDistribution] = useState<StatusDistribution[]>([]);
 
-  const COLORS = ["#CB1973", "#C0C6D2"]; // Rosa y gris
+  const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-  // Fetch tasks para el producto seleccionado
-  const fetchTasks = async (productId: string) => {
+  const fetchMetrics = async (productId: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/product-tasks?productId=${productId}&limit=1000`);
+      const url = `/api/metrics?productId=${productId}`;
+      
+      const response = await fetch(url);
+      
       if (response.ok) {
         const data = await response.json();
-        setTasks(data.tasks || []);
-        console.log('📊 Tareas cargadas para métricas:', data.tasks?.length || 0);
+        setProductSummary(data.productSummary);
+        setStatusDistribution(data.statusDistribution);
       } else {
-        console.error('Error fetching tasks for metrics');
-        setTasks([]);
+        const errorText = await response.text();
+        console.error('Error fetching metrics:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Error fetching tasks:', error);
-      setTasks([]);
+      console.error('Error fetching metrics:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Procesar tareas para generar datos de métricas
-  const processMetricsData = (tasks: Task[]): MetricsData => {
-    if (tasks.length === 0) {
-      return {
-        productProgress: [],
-        statusSummary: [],
-        progressTimeline: [],
-        phaseDistribution: []
-      };
-    }
-
-    // 1. Product Progress (completadas vs pendientes)
-    const completedTasks = tasks.filter(task => 
-      task.status_name && ['completed', 'done', 'finished', 'completada'].includes(task.status_name.toLowerCase())
-    ).length;
-    const pendingTasks = tasks.length - completedTasks;
-    
-    const productProgress = [
-      { name: 'Completed', value: completedTasks },
-      { name: 'Pending', value: pendingTasks }
-    ];
-
-    // 2. Status Summary (agrupado por estado)
-    const statusGroups = tasks.reduce((acc, task) => {
-      const status = task.status_name || 'Unknown';
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const statusSummary = Object.entries(statusGroups).map(([status, count]) => ({
-      status,
-      count
-    }));
-
-    // 3. Progress Timeline (por mes de creación)
-    const timelineGroups = tasks.reduce((acc, task) => {
-      const date = new Date(task.created_at);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      acc[monthKey] = (acc[monthKey] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const progressTimeline = Object.entries(timelineGroups)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, progress]) => ({
-        name: month,
-        progress
-      }));
-
-    // 4. Phase Distribution (agrupado por fase)
-    const phaseGroups = tasks.reduce((acc, task) => {
-      const phase = task.phase_name || 'Unknown';
-      acc[phase] = (acc[phase] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const phaseDistribution = Object.entries(phaseGroups).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    return {
-      productProgress,
-      statusSummary,
-      progressTimeline,
-      phaseDistribution
-    };
-  };
-
-  // Escuchar cambios en localStorage
+  // Inicialización al montar el componente
   useEffect(() => {
-    const checkProductSelection = () => {
-      const productId = localStorage.getItem('selectedProductId');
-      if (productId !== selectedProductId) {
-        console.log('📦 Product changed in metrics to:', productId);
+    const checkForProduct = () => {
+      const productId1 = localStorage.getItem('selectedProductId');
+      const productId2 = localStorage.getItem('productId');
+      const productId3 = sessionStorage.getItem('selectedProductId');
+      
+      const productId = productId1 || productId2 || productId3;
+      
+      if (productId && productId !== selectedProductId) {
         setSelectedProductId(productId);
-        if (productId) {
-          fetchTasks(productId);
-        } else {
-          setTasks([]);
-          setLoading(false);
-        }
+        return true;
+      } else if (productId) {
+        return true;
+      } else {
+        return false;
       }
     };
 
-    checkProductSelection();
-    window.addEventListener('storage', checkProductSelection);
-    const interval = setInterval(checkProductSelection, 1000);
+    // Check immediately
+    checkForProduct();
+
+    // Also check every 2 seconds in case of changes
+    const interval = setInterval(() => {
+      checkForProduct();
+    }, 2000);
+
+    // Listen for storage changes from other tabs/components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'selectedProductId' && e.newValue) {
+        setSelectedProductId(e.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Custom event listener for same-tab changes
+    const handleCustomEvent = () => {
+      checkForProduct();
+    };
+
+    window.addEventListener('productChanged', handleCustomEvent);
 
     return () => {
-      window.removeEventListener('storage', checkProductSelection);
       clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('productChanged', handleCustomEvent);
     };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escuchar cambios en el producto seleccionado
+  useEffect(() => {
+    if (selectedProductId) {
+      fetchMetrics(selectedProductId);
+    }
   }, [selectedProductId]);
 
-  // Actualizar métricas cuando cambien las tareas
-  useEffect(() => {
-    const newMetricsData = processMetricsData(tasks);
-    setMetricsData(newMetricsData);
-  }, [tasks]);
+  // Preparar datos para los gráficos (memoizado para evitar recálculos)
+  const chartData = useMemo(() => {
+    const progressData = productSummary ? [
+      { name: 'Completado', value: parseFloat(productSummary.completion_percentage) }
+    ] : [];
 
-  // Verificar primero si no hay producto seleccionado
+    const statusData = statusDistribution.map(item => ({
+      name: item.name,
+      value: parseInt(item.value),
+      percentage: parseFloat(item.percentage)
+    }));
+    
+    return { progressData, statusData };
+  }, [productSummary, statusDistribution]);
+
+  // Verificar si no hay producto seleccionado
   if (!selectedProductId) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-lg font-medium mb-2">No hay producto seleccionado</h2>
-          <p className="text-muted-foreground">Selecciona un producto del menú superior para ver las métricas.</p>
+          <h2 className="text-xl font-medium mb-2">No hay producto seleccionado</h2>
+          <p className="text-gray-600">Selecciona un producto del menú superior para ver las métricas.</p>
         </div>
       </div>
     );
@@ -191,89 +150,148 @@ export default function MetricsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Cargando métricas...</div>
-      </div>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">No hay tareas para mostrar métricas</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-600">Cargando métricas...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Pie Chart - Product Progress */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold mb-2">Product Progress</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={metricsData.productProgress}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {metricsData.productProgress.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Bar Chart - Task Status */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold mb-2">Task Status</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={metricsData.statusSummary}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="status" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" fill="#CB1973" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Line Chart - Progress Over Time */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold mb-2">Progress Over Time</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={metricsData.progressTimeline}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="progress" stroke="#CB1973" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Area Chart - Phase Distribution */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold mb-2">Phase Distribution</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={metricsData.phaseDistribution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="value" stroke="#1f2b48" fill="#7389BE" />
-              </AreaChart>
-            </ResponsiveContainer>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header con resumen ejecutivo */}
+      {productSummary && (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">{productSummary.product_name}</h1>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{productSummary.total_tasks}</div>
+              <div className="text-sm text-gray-600">Total Tareas</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{productSummary.completed_tasks}</div>
+              <div className="text-sm text-gray-600">Completadas</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-blue-500">{productSummary.in_progress_tasks}</div>
+              <div className="text-sm text-gray-600">En Progreso</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-yellow-500">{productSummary.pending_tasks}</div>
+              <div className="text-sm text-gray-600">Pendientes</div>
+            </div>
           </div>
         </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Progreso General del Producto */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Progreso General</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={chartData.progressData}>
+              <RadialBar 
+                dataKey="value" 
+                cornerRadius={10} 
+                fill="#10B981"
+              />
+              <Tooltip formatter={(value) => [`${value}%`, 'Completado']} />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <div className="text-center mt-4">
+            <span className="text-3xl font-bold text-green-600">
+              {productSummary?.completion_percentage || 0}%
+            </span>
+            <p className="text-gray-600">Completado</p>
+          </div>
+        </div>
+
+        {/* Distribución por Estado */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Distribución por Estado</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={chartData.statusData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={120}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {chartData.statusData.map((entry: ChartStatusData, index: number) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value, name) => [`${value} tareas`, name]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Tabla de Detalles */}
+        <div className="bg-white rounded-xl shadow p-6 lg:col-span-2">
+          <h2 className="text-xl font-semibold mb-4">Detalles por Estado</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left">Estado</th>
+                  <th className="px-4 py-2 text-right">Cantidad</th>
+                  <th className="px-4 py-2 text-right">Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chartData.statusData.map((item: ChartStatusData, index: number) => (
+                  <tr key={index} className="border-t">
+                    <td className="px-4 py-2 flex items-center">
+                      <div 
+                        className="w-4 h-4 rounded mr-2" 
+                        style={{ backgroundColor: COLORS[index] }}
+                      ></div>
+                      {item.name}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">{item.value}</td>
+                    <td className="px-4 py-2 text-right">{item.percentage}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Insights */}
+      {productSummary && (
+        <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Insights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {parseFloat(productSummary.completion_percentage) >= 80 && (
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <h3 className="font-medium text-green-800">🎉 Excelente Progreso</h3>
+                <p className="text-sm text-green-700">El producto está muy avanzado con {productSummary.completion_percentage}% completado.</p>
+              </div>
+            )}
+            
+            {parseInt(productSummary.completed_tasks) > parseInt(productSummary.in_progress_tasks) && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-medium text-blue-800">✅ Productividad Alta</h3>
+                <p className="text-sm text-blue-700">Más tareas completadas que en progreso. ¡Buen ritmo!</p>
+              </div>
+            )}
+            
+            {parseInt(productSummary.total_tasks) > 0 && (
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <h3 className="font-medium text-purple-800">📊 Análisis General</h3>
+                <p className="text-sm text-purple-700">Total de {productSummary.total_tasks} tareas en el producto.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

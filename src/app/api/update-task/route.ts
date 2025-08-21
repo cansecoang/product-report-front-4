@@ -21,7 +21,8 @@ export async function PUT(request: NextRequest) {
       checkin_gender,
       phase_id,
       status_id,
-      org_id
+      org_id,
+      responsable_id
     } = body;
 
     if (!id) {
@@ -79,7 +80,7 @@ export async function PUT(request: NextRequest) {
         checkin_gender && checkin_gender.trim() ? new Date(checkin_gender).toISOString() : null,
         phase_id ? parseInt(phase_id) : null,
         status_id ? parseInt(status_id) : null,
-        org_id ? parseInt(org_id) : null,
+        org_id ? parseInt(org_id) : (responsable_id ? parseInt(responsable_id) : null),
         parseInt(id)
       ];
       

@@ -82,7 +82,10 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingProductData, setEditingProductData] = useState<EditingProduct | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Para forzar refresh de dropdowns
 
   // Limpiar localStorage al inicializar para que no haya productos pre-seleccionados
   useEffect(() => {
@@ -102,9 +105,18 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
     // Store in localStorage for other components to use
     if (productId) {
       localStorage.setItem('selectedProductId', productId);
+      
+      // Dispatch custom event for same-tab components
+      window.dispatchEvent(new CustomEvent('productChanged', { 
+        detail: { productId } 
+      }));
+      
       fetchProductInfo(productId);
     } else {
       localStorage.removeItem('selectedProductId');
+      window.dispatchEvent(new CustomEvent('productChanged', { 
+        detail: { productId: null } 
+      }));
       setSelectedProduct(null);
     }
   };
@@ -124,7 +136,8 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const handleProductAdded = () => {
     // Refresh or handle product addition
     console.log('Product added, refreshing...');
-    // TODO: Refrescar la lista de productos
+    // Refrescar la lista de productos
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleProductUpdated = () => {
@@ -134,7 +147,8 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
     if (selectedProduct?.id) {
       fetchProductInfo(selectedProduct.id);
     }
-    // TODO: Refrescar la lista de productos
+    // Refrescar la lista de productos
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleAddTaskClick = () => {
@@ -211,6 +225,51 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
     });
   };
 
+  const handleDeleteProduct = () => {
+    if (!selectedProduct) return;
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!selectedProduct) return;
+    
+    setIsDeleting(true);
+    try {
+      console.log(`🗑️ Eliminando producto ${selectedProduct.id}...`);
+      
+      const response = await fetch(`/api/delete-product?productId=${selectedProduct.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Producto eliminado:', data);
+        
+        // Limpiar selección actual
+        setSelectedProduct(null);
+        localStorage.removeItem('selectedProductId');
+        
+        // Cerrar modal de confirmación
+        setIsDeleteConfirmOpen(false);
+        
+        // Refrescar la lista de productos incrementando el trigger
+        setRefreshTrigger(prev => prev + 1);
+        
+        alert(`Producto "${data.details?.productName}" eliminado correctamente`);
+        
+      } else {
+        const errorData = await response.json();
+        console.error('Error eliminando producto:', errorData);
+        alert(`Error eliminando producto: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error eliminando producto:', error);
+      alert('Error eliminando producto');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       {/* Product-specific toolbar below the main header */}
@@ -222,6 +281,7 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
               initialWorkPackages={initialWorkPackages}
               onWorkPackageChange={handleWorkPackageChange}
               onProductChange={handleProductChange}
+              refreshTrigger={refreshTrigger}
             />
           </div>
 
@@ -260,7 +320,8 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
               {/* Botón Add Product */}
               <Button 
                 onClick={() => setIsAddProductModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5"
+                variant="outline"
+                className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 text-sm px-3 py-1.5"
                 size="sm"
               >
                 + Add Product
@@ -269,7 +330,8 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
               {/* Botón Add Task */}
               <Button 
                 onClick={handleAddTaskClick}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5"
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-sm px-3 py-1.5"
                 size="sm"
               >
                 + Add Task
@@ -280,7 +342,9 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
             {selectedProduct && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
+                variant="outline"
+                className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-sm px-3 py-1.5"
+                size="sm"
               >
                 Details
               </Button>
@@ -296,6 +360,7 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onEdit={handleEditProduct}
+          onDelete={handleDeleteProduct}
         />
       )}
 
@@ -321,6 +386,60 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
         productId={selectedProduct?.id?.toString() || null}
         onTaskAdded={handleTaskAdded}
       />
+
+      {/* Modal de confirmación de eliminación */}
+      {isDeleteConfirmOpen && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsDeleteConfirmOpen(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-background rounded-lg border shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-red-700 mb-4">
+              ⚠️ Confirmar Eliminación
+            </h3>
+            
+            <div className="mb-6">
+              <p className="text-foreground mb-2">
+                ¿Estás seguro de que quieres eliminar el producto:
+              </p>
+              <p className="font-semibold bg-muted p-2 rounded">
+                &ldquo;{selectedProduct.name}&rdquo;
+              </p>
+              <div className="mt-3 text-sm text-red-600">
+                <p>⚠️ Esta acción eliminará:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>El producto y toda su información</li>
+                  <li>Todas las tareas relacionadas</li>
+                  <li>Todas las relaciones (responsables, organizaciones, indicadores, distribuidores)</li>
+                </ul>
+                <p className="mt-2 font-semibold">Esta acción NO se puede deshacer.</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteConfirmOpen(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={confirmDeleteProduct}
+                className="border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar Definitivamente'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

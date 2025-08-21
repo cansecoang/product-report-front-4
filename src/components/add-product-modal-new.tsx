@@ -217,7 +217,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     setResponsibleAssignments(responsibleAssignments.filter((_, i) => i !== index));
   };
 
-  const updateResponsible = (index: number, field: keyof ResponsibleAssignment, value: any) => {
+  const updateResponsible = (index: number, field: keyof ResponsibleAssignment, value: string | number | boolean) => {
     const updated = [...responsibleAssignments];
     updated[index] = { ...updated[index], [field]: value };
     setResponsibleAssignments(updated);
@@ -235,7 +235,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     setOrganizationAssignments(organizationAssignments.filter((_, i) => i !== index));
   };
 
-  const updateOrganization = (index: number, field: keyof OrganizationAssignment, value: any) => {
+  const updateOrganization = (index: number, field: keyof OrganizationAssignment, value: string | number) => {
     const updated = [...organizationAssignments];
     updated[index] = { ...updated[index], [field]: value };
     setOrganizationAssignments(updated);

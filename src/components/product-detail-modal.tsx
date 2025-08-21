@@ -90,9 +90,10 @@ interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function ProductDetailModal({ product, isOpen, onClose, onEdit }: ProductDetailModalProps) {
+export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete }: ProductDetailModalProps) {
   const [detailedInfo, setDetailedInfo] = useState<DetailedProductInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -145,9 +146,19 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit }: Product
                 variant="outline"
                 size="sm"
                 onClick={onEdit}
-                className="h-8"
+                className="h-8 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
               >
-                Editar
+                Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onDelete}
+                className="h-8 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+              >
+                Delete
               </Button>
             )}
             <Button

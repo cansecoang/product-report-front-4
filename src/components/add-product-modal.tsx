@@ -158,7 +158,7 @@ export default function AddProductModal({
         ]);
 
         // Procesar respuestas
-        const [wpRes, wgRes, countriesRes, orgsRes, usersRes, indicatorsRes, outputsRes] = responses;
+        const [wpRes, wgRes, countriesRes, orgsRes, usersRes, , outputsRes] = responses;
 
         // Work Packages
         if (wpRes.status === 'fulfilled' && wpRes.value.ok) {
@@ -556,9 +556,16 @@ export default function AddProductModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-background rounded-lg border shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto mx-4">
+        <div className="sticky top-0 bg-background border-b px-6 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">
             {mode === 'edit' ? 'Editar Producto' : 'Crear Nuevo Producto'}
           </h2>

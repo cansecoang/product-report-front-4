@@ -22,8 +22,10 @@ interface Status {
 }
 
 interface Organization {
-  org_id: number;
-  org_name: string;
+  organization_id: number;
+  organization_name: string;
+  organization_description?: string;
+  organization_type?: string;
 }
 
 interface TaskFormData {
@@ -82,9 +84,13 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
         orgsRes.json()
       ]);
 
-      setPhases(phasesData.phases || []);
-      setStatuses(statusesData.statuses || []);
-      setOrganizations(orgsData.organizations || []);
+      console.log('🔍 Organizations data received:', orgsData);
+
+      setPhases((phasesData.phases || []).filter((phase: Phase) => phase.phase_id));
+      setStatuses((statusesData.statuses || []).filter((status: Status) => status.status_id));
+      setOrganizations((orgsData.organizations || []).filter((org: Organization) => org.organization_id));
+      
+      console.log('✅ Organizations loaded:', (orgsData.organizations || []).length);
     } catch (error) {
       console.error('Error loading form data:', error);
     } finally {
@@ -97,6 +103,11 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
       loadFormData();
     }
   }, [isOpen, productId, loadFormData]);
+
+  // Monitor organizations state
+  useEffect(() => {
+    console.log('🔍 Organizations state updated:', organizations.length, organizations);
+  }, [organizations]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -178,11 +189,18 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-background rounded-lg border shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Add New Task</h2>
+          <h2 className="text-xl font-semibold">Add New Task</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -312,8 +330,8 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Phase</option>
-                    {phases.map((phase) => (
-                      <option key={phase.phase_id} value={phase.phase_id}>
+                    {phases.map((phase, index) => (
+                      <option key={`phase-${phase.phase_id}-${index}`} value={phase.phase_id}>
                         {phase.phase_name}
                       </option>
                     ))}
@@ -333,8 +351,8 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Status</option>
-                    {statuses.map((status) => (
-                      <option key={status.status_id} value={status.status_id}>
+                    {statuses.map((status, index) => (
+                      <option key={`status-${status.status_id}-${index}`} value={status.status_id}>
                         {status.status_name}
                       </option>
                     ))}
@@ -343,19 +361,20 @@ export default function AddTaskModal({ isOpen, onClose, productId, onTaskAdded }
 
                 <div>
                   <label htmlFor="responsable_id" className="block text-sm font-medium text-gray-700 mb-2">
-                    Assigned To (Organization)
+                    Assigned To *
                   </label>
                   <select
                     id="responsable_id"
                     name="responsable_id"
                     value={formData.responsable_id}
                     onChange={handleInputChange}
+                    disabled={loading}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Organization</option>
-                    {organizations.map((org) => (
-                      <option key={org.org_id} value={org.org_id}>
-                        {org.org_name}
+                    {organizations.map((org, index) => (
+                      <option key={`org-${org.organization_id}-${index}`} value={org.organization_id}>
+                        {org.organization_name}
                       </option>
                     ))}
                   </select>

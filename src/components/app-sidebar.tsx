@@ -3,12 +3,10 @@
 import * as React from "react"
 import {
   AudioWaveform,
-  BookOpen,
   Command,
   SquareTerminal,
   Home,
   BarChart3,
-  Settings,
   Leaf,
   Target,
   Calendar,
@@ -23,7 +21,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 
 // Data optimizada para BioFincas

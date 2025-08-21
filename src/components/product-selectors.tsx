@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -27,17 +27,26 @@ interface ProductSelectorsProps {
   initialWorkPackages: WorkPackage[];
   onWorkPackageChange?: (workPackageId: string | null) => void;
   onProductChange?: (productId: string | null) => void;
+  refreshTrigger?: number; // Para forzar refresh cuando se elimina un producto
 }
 
 export function ProductSelectors({ 
   initialWorkPackages,
   onWorkPackageChange, 
-  onProductChange 
+  onProductChange,
+  refreshTrigger
 }: ProductSelectorsProps) {
   const [selectedWorkPackage, setSelectedWorkPackage] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  // Refrescar productos cuando cambie refreshTrigger
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0 && selectedWorkPackage) {
+      fetchProducts(selectedWorkPackage);
+    }
+  }, [refreshTrigger, selectedWorkPackage]);
 
   const fetchProducts = async (workPackageId: string) => {
     setIsLoadingProducts(true);
