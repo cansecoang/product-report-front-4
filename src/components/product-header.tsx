@@ -59,7 +59,7 @@ export function ProductHeader({ initialWorkPackages }: ProductHeaderProps) {
       const response = await fetch(`/api/product-full-details?productId=${productId}`);
       if (response.ok) {
         const data = await response.json();
-        setSelectedProduct(data);
+        setSelectedProduct(data.product);
       }
     } catch (error) {
       console.error('Error fetching product info:', error);

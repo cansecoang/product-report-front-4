@@ -75,6 +75,10 @@ interface Distributors {
 
 interface DetailedProductInfo {
   product: ProductInfo;
+  primaryOrganization?: {
+    organization_name: string;
+    organization_description?: string;
+  } | null;
   organizations?: Organization[];
   responsibles?: Responsible[];
   indicators?: Indicator[];
@@ -184,6 +188,19 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
                   )}
                 </div>
               </section>
+
+              {/* Primary Organization Details */}
+              {detailedInfo?.primaryOrganization && (
+                <section>
+                  <h3 className="text-lg font-medium mb-3">Primary Organization Details</h3>
+                  <div className="p-4 bg-primary/5 rounded border border-primary/20">
+                    <p className="font-medium text-primary">{detailedInfo.primaryOrganization.organization_name}</p>
+                    {detailedInfo.primaryOrganization.organization_description && (
+                      <p className="text-sm text-muted-foreground mt-2">{detailedInfo.primaryOrganization.organization_description}</p>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Organizations Involved */}
               {detailedInfo?.organizations && detailedInfo.organizations.length > 0 && (

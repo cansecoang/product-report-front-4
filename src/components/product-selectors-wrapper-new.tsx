@@ -26,7 +26,10 @@ interface Product {
   nextSteps?: string;
   workPackageId: string;
   workPackageName?: string;
-  primaryOrganization?: string;
+  primaryOrganization?: string | {
+    organization_name: string;
+    organization_description?: string;
+  };
   country?: string;
 }
 
@@ -138,7 +141,9 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
                 
                 {/* Organization Responsible */}
                 <div className="text-sm font-medium">
-                  [{selectedProduct.primaryOrganization?.toUpperCase() || 'NO ORGANIZATION'} RESPONSABLE]
+                  [{typeof selectedProduct.primaryOrganization === 'string' 
+                    ? selectedProduct.primaryOrganization?.toUpperCase() 
+                    : selectedProduct.primaryOrganization?.organization_name?.toUpperCase() || 'NO ORGANIZATION'} RESPONSABLE]
                 </div>
               </>
             )}
@@ -159,7 +164,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
       {/* Modals */}
       {selectedProduct && (
         <ProductDetailModal 
-          product={selectedProduct}
+          product={{
+            ...selectedProduct,
+            primaryOrganization: typeof selectedProduct.primaryOrganization === 'string' 
+              ? selectedProduct.primaryOrganization 
+              : selectedProduct.primaryOrganization?.organization_name || undefined
+          }}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />

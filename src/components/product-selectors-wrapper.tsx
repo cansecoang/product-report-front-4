@@ -22,7 +22,10 @@ interface ProductInfo {
   deliveryDate?: string;
   workPackageId: string;
   workPackageName?: string;
-  primaryOrganization?: string;
+  primaryOrganization?: string | {
+    organization_name: string;
+    organization_description?: string;
+  };
   country?: string;
 }
 
@@ -99,7 +102,9 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
           <div className="flex items-center">
             {selectedProduct && (
               <div className="text-lg font-medium text-foreground">
-                {selectedProduct.primaryOrganization || 'No Organization'}
+                {typeof selectedProduct.primaryOrganization === 'string' 
+                  ? selectedProduct.primaryOrganization 
+                  : selectedProduct.primaryOrganization?.organization_name || 'No Organization'}
               </div>
             )}
           </div>
@@ -171,7 +176,12 @@ export function ProductSelectorsWrapper({ initialWorkPackages }: ProductSelector
       {/* Modals */}
       {selectedProduct && (
         <ProductDetailModal 
-          product={selectedProduct}
+          product={{
+            ...selectedProduct,
+            primaryOrganization: typeof selectedProduct.primaryOrganization === 'string' 
+              ? selectedProduct.primaryOrganization 
+              : selectedProduct.primaryOrganization?.organization_name || undefined
+          }}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
