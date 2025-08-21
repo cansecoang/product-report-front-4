@@ -1,41 +1,15 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Plus, Trash2 } from 'lucide-react';
 
-interface EditingProduct {
-  product_id: number;
-  product_name: string;
-  product_objective: string;
-  deliverable: string;
-  delivery_date: string;
-  methodology_description: string;
-  gender_specific_actions: string;
-  next_steps: string;
-  workpackage_id: string;
-  workinggroup_id?: string; // Agregar working group como opcional
-  product_owner_id: string;
-  country_id: string;
-  output_number: string;
-  // Relaciones
-  responsibles?: ResponsibleAssignment[];
-  organizations?: OrganizationAssignment[];
-  indicators?: number[];
-  distributorOrgs?: number[];
-  distributorUsers?: number[];
-  distributorOthers?: DistributorOther[];
-}
-
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProductAdded: () => void;
-  onProductUpdated?: () => void; // Callback específico para actualización
-  editingProduct?: EditingProduct; // Producto a editar (opcional)
-  mode?: 'create' | 'edit'; // Modo del modal
 }
 
 interface WorkPackage {
@@ -86,38 +60,28 @@ interface DistributorOther {
   contact: string;
 }
 
-export default function AddProductModal({ 
-  isOpen, 
-  onClose, 
-  onProductAdded, 
-  onProductUpdated,
-  editingProduct, 
-  mode = 'create' 
-}: AddProductModalProps) {
+export default function AddProductModal({ isOpen, onClose, onProductAdded }: AddProductModalProps) {
   // Estados para el formulario principal
   const [formData, setFormData] = useState({
     product_name: '',
     product_objective: '',
     deliverable: '',
     delivery_date: '',
+    product_output: '',
     methodology_description: '',
     gender_specific_actions: '',
     next_steps: '',
     workpackage_id: '',
-    workinggroup_id: '', // Nuevo campo para working group
     product_owner_id: '',
-    country_id: '',
-    output_number: ''
+    country_id: ''
   });
 
   // Estados para las opciones disponibles
   const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
-  const [workingGroups, setWorkingGroups] = useState<{workinggroup_id: number, workinggroup_name: string, workinggroup_description: string}[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [outputs, setOutputs] = useState<{value: string, label: string}[]>([]);
 
   // Estados para las relaciones
   const [responsibleAssignments, setResponsibleAssignments] = useState<ResponsibleAssignment[]>([]);
@@ -131,6 +95,13 @@ export default function AddProductModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch todas las opciones al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllOptions();
+    }
+  }, [isOpen]);
+
   const fetchAllOptions = async () => {
     setLoading(true);
     setError(null);
@@ -142,6 +113,26 @@ export default function AddProductModal({
           { workpackage_id: 2, workpackage_name: "Sustainable Agriculture" },
           { workpackage_id: 3, workpackage_name: "Capacity Building" },
           { workpackage_id: 4, workpackage_name: "Research & Monitoring" }
+        ],
+        countries: [
+          { country_id: 1, country_name: "Colombia" },
+          { country_id: 2, country_name: "Mexico" },
+          { country_id: 3, country_name: "Peru" }
+        ],
+        organizations: [
+          { organization_id: 1, organization_name: "OroVerde", organization_description: "German environmental organization" },
+          { organization_id: 2, organization_name: "Pronatura Sur", organization_description: "Mexican conservation organization" },
+          { organization_id: 3, organization_name: "SINCHI", organization_description: "Colombian research institute" }
+        ],
+        users: [
+          { user_id: 1, user_name: "Ana", user_last_name: "García", user_email: "ana.garcia@example.com" },
+          { user_id: 2, user_name: "Carlos", user_last_name: "Méndez", user_email: "carlos.mendez@example.com" },
+          { user_id: 3, user_name: "María", user_last_name: "Silva", user_email: "maria.silva@example.com" }
+        ],
+        indicators: [
+          { indicator_id: 1, indicator_name: "Hectares Restored", indicator_code: "1.1", indicator_description: "Total hectares of forest restored" },
+          { indicator_id: 2, indicator_name: "Farmers Trained", indicator_code: "2.1", indicator_description: "Number of farmers trained in sustainable practices" },
+          { indicator_id: 3, indicator_name: "Species Monitored", indicator_code: "1.2", indicator_description: "Number of species under monitoring" }
         ]
       };
 
@@ -149,82 +140,52 @@ export default function AddProductModal({
       try {
         const responses = await Promise.allSettled([
           fetch('/api/work-packages'),
-          fetch('/api/working-groups'),
           fetch('/api/countries'),
           fetch('/api/organizations'),
           fetch('/api/responsibles'),
-          fetch('/api/indicators'),
-          fetch('/api/outputs')
+          fetch('/api/indicators')
         ]);
 
         // Procesar respuestas
-        const [wpRes, wgRes, countriesRes, orgsRes, usersRes, indicatorsRes, outputsRes] = responses;
+        const [wpRes, countriesRes, orgsRes, usersRes, indicatorsRes] = responses;
 
-        // Work Packages
-        if (wpRes.status === 'fulfilled' && wpRes.value.ok) {
-          const wpData = await wpRes.value.json();
-          console.log('Work packages data:', wpData);
-          setWorkPackages(Array.isArray(wpData.workpackages) ? wpData.workpackages : mockData.workpackages);
-        } else {
-          setWorkPackages(mockData.workpackages);
-        }
+        setWorkPackages(
+          wpRes.status === 'fulfilled' && wpRes.value.ok 
+            ? (await wpRes.value.json()).workpackages || mockData.workpackages
+            : mockData.workpackages
+        );
         
-        // Working Groups
-        if (wgRes.status === 'fulfilled' && wgRes.value.ok) {
-          const wgData = await wgRes.value.json();
-          console.log('Working groups data:', wgData);
-          setWorkingGroups(Array.isArray(wgData.workingGroups) ? wgData.workingGroups : []);
-        } else {
-          setWorkingGroups([]);
-        }
+        setCountries(
+          countriesRes.status === 'fulfilled' && countriesRes.value.ok 
+            ? (await countriesRes.value.json()).countries || mockData.countries
+            : mockData.countries
+        );
         
-        // Countries - usar datos reales de la BD
-        if (countriesRes.status === 'fulfilled' && countriesRes.value.ok) {
-          const countriesData = await countriesRes.value.json();
-          console.log('Countries data:', countriesData);
-          setCountries(Array.isArray(countriesData.countries) ? countriesData.countries : []);
-        } else {
-          setCountries([]);
-        }
+        setOrganizations(
+          orgsRes.status === 'fulfilled' && orgsRes.value.ok 
+            ? (await orgsRes.value.json()).organizations || mockData.organizations
+            : mockData.organizations
+        );
         
-        // Organizations - solo las que tienen organization_type = 'M'
-        if (orgsRes.status === 'fulfilled' && orgsRes.value.ok) {
-          const orgsData = await orgsRes.value.json();
-          console.log('Organizations data:', orgsData);
-          setOrganizations(Array.isArray(orgsData.organizations) ? orgsData.organizations : []);
-        } else {
-          setOrganizations([]);
-        }
+        setUsers(
+          usersRes.status === 'fulfilled' && usersRes.value.ok 
+            ? (await usersRes.value.json()).responsibles || mockData.users
+            : mockData.users
+        );
         
-        // Users - datos reales de la BD
-        if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
-          const usersData = await usersRes.value.json();
-          console.log('Users data:', usersData);
-          setUsers(Array.isArray(usersData.responsibles) ? usersData.responsibles : []);
-        } else {
-          setUsers([]);
-        }
-        
-        // Indicators - inicialmente vacío, se carga cuando se selecciona output
-        setIndicators([]);
-
-        // Outputs - valores únicos de output_number
-        if (outputsRes.status === 'fulfilled' && outputsRes.value.ok) {
-          const outputsData = await outputsRes.value.json();
-          console.log('Outputs data:', outputsData);
-          setOutputs(Array.isArray(outputsData.outputs) ? outputsData.outputs : []);
-        } else {
-          setOutputs([]);
-        }
+        setIndicators(
+          indicatorsRes.status === 'fulfilled' && indicatorsRes.value.ok 
+            ? (await indicatorsRes.value.json()).indicators || mockData.indicators
+            : mockData.indicators
+        );
 
       } catch (error) {
-        console.warn('Using fallback data due to API error:', error);
+        console.warn('Using mock data due to API error:', error);
         setWorkPackages(mockData.workpackages);
-        setCountries([]);
-        setOrganizations([]);
-        setUsers([]);
-        setIndicators([]);
-        setOutputs([]);
+        setCountries(mockData.countries);
+        setOrganizations(mockData.organizations);
+        setUsers(mockData.users);
+        setIndicators(mockData.indicators);
       }
 
     } catch (error) {
@@ -235,158 +196,12 @@ export default function AddProductModal({
     }
   };
 
-  // Función para formatear fecha para input date HTML
-  const formatDateForInput = (dateString: string): string => {
-    if (!dateString) return '';
-    try {
-      // Si ya está en formato YYYY-MM-DD, devolverlo tal como está
-      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return dateString;
-      }
-      // Si es una fecha completa, extraer solo la parte de fecha
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      return date.toISOString().split('T')[0];
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
-    }
-  };
-
-  const loadProductData = useCallback((product: EditingProduct) => {
-    console.log('loadProductData called with:', product);
-    console.log('Product responsibles to load:', product.responsibles);
-    console.log('Product organizations to load:', product.organizations);
-    console.log('Product indicators to load:', product.indicators);
-    
-    // Cargar datos básicos del formulario
-    setFormData({
-      product_name: product.product_name || '',
-      product_objective: product.product_objective || '',
-      deliverable: product.deliverable || '',
-      delivery_date: formatDateForInput(product.delivery_date || ''),
-      methodology_description: product.methodology_description || '',
-      gender_specific_actions: product.gender_specific_actions || '',
-      next_steps: product.next_steps || '',
-      workpackage_id: product.workpackage_id?.toString() || '',
-      workinggroup_id: product.workinggroup_id?.toString() || '', // Agregar working group
-      product_owner_id: product.product_owner_id?.toString() || '',
-      country_id: product.country_id?.toString() || '',
-      output_number: product.output_number?.toString() || ''
-    });
-
-    // Cargar responsables
-    if (product.responsibles) {
-      console.log('Loading responsibles:', product.responsibles);
-      setResponsibleAssignments(product.responsibles.map(r => ({
-        user_id: r.user_id || 0,
-        role_label: r.role_label || '',
-        is_primary: r.is_primary || false,
-        position: r.position || 0
-      })));
-    } else {
-      console.log('No responsibles to load');
-    }
-
-    // Cargar organizaciones
-    if (product.organizations) {
-      console.log('Loading organizations:', product.organizations);
-      setOrganizationAssignments(product.organizations.map(o => ({
-        organization_id: o.organization_id || 0,
-        relation_type: o.relation_type || '',
-        position: o.position || 0
-      })));
-    } else {
-      console.log('No organizations to load');
-    }
-
-    // Cargar indicadores seleccionados
-    if (product.indicators) {
-      console.log('Loading indicators:', product.indicators);
-      setSelectedIndicators(product.indicators);
-    } else {
-      console.log('No indicators to load');
-    }
-
-    // Cargar distribuidores
-    if (product.distributorOrgs) {
-      console.log('Loading distributor orgs:', product.distributorOrgs);
-      setDistributorOrgs(product.distributorOrgs);
-    } else {
-      console.log('No distributor orgs to load');
-    }
-
-    if (product.distributorUsers) {
-      console.log('Loading distributor users:', product.distributorUsers);
-      setDistributorUsers(product.distributorUsers);
-    } else {
-      console.log('No distributor users to load');
-    }
-
-    if (product.distributorOthers) {
-      console.log('Loading distributor others:', product.distributorOthers);
-      setDistributorOthers(product.distributorOthers);
-    } else {
-      console.log('No distributor others to load');
-    }
-
-    // Cargar indicadores filtrados por output si hay un output seleccionado
-    if (product.output_number) {
-      // Usar setTimeout para evitar problemas de dependencias
-      setTimeout(() => {
-        fetchIndicatorsByOutput(product.output_number || '');
-      }, 100);
-    }
-  }, []); // Sin dependencias porque usamos setTimeout
-
-  // Función para cargar indicadores filtrados por output
-  const fetchIndicatorsByOutput = async (outputNumber: string) => {
-    if (!outputNumber) {
-      setIndicators([]);
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/indicators?output=${outputNumber}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Filtered indicators data:', data);
-        setIndicators(Array.isArray(data.indicators) ? data.indicators : []);
-      } else {
-        console.error('Error fetching filtered indicators');
-        setIndicators([]);
-      }
-    } catch (error) {
-      console.error('Error fetching indicators:', error);
-      setIndicators([]);
-    }
-  };
-
-  // Fetch todas las opciones al abrir el modal
-  useEffect(() => {
-    if (isOpen) {
-      fetchAllOptions();
-      
-      // Si estamos en modo edición y hay un producto, cargar sus datos
-      if (mode === 'edit' && editingProduct) {
-        loadProductData(editingProduct);
-      }
-    }
-  }, [isOpen, mode, editingProduct, loadProductData]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-
-    // Si cambió el output, cargar indicadores filtrados
-    if (name === 'output_number') {
-      fetchIndicatorsByOutput(value);
-      // Limpiar indicadores seleccionados cuando cambia el output
-      setSelectedIndicators([]);
-    }
   };
 
   const addResponsible = () => {
@@ -402,7 +217,7 @@ export default function AddProductModal({
     setResponsibleAssignments(responsibleAssignments.filter((_, i) => i !== index));
   };
 
-  const updateResponsible = (index: number, field: keyof ResponsibleAssignment, value: string | number | boolean) => {
+  const updateResponsible = (index: number, field: keyof ResponsibleAssignment, value: any) => {
     const updated = [...responsibleAssignments];
     updated[index] = { ...updated[index], [field]: value };
     setResponsibleAssignments(updated);
@@ -420,7 +235,7 @@ export default function AddProductModal({
     setOrganizationAssignments(organizationAssignments.filter((_, i) => i !== index));
   };
 
-  const updateOrganization = (index: number, field: keyof OrganizationAssignment, value: string | number) => {
+  const updateOrganization = (index: number, field: keyof OrganizationAssignment, value: any) => {
     const updated = [...organizationAssignments];
     updated[index] = { ...updated[index], [field]: value };
     setOrganizationAssignments(updated);
@@ -449,31 +264,9 @@ export default function AddProductModal({
     setError(null);
 
     try {
-      const payload: {
-        product_name: string;
-        product_objective: string;
-        deliverable: string;
-        delivery_date: string;
-        methodology_description: string;
-        gender_specific_actions: string;
-        next_steps: string;
-        workpackage_id: number;
-        workinggroup_id?: number; // Nuevo campo working group
-        product_owner_id: number;
-        country_id: number;
-        product_output: string; // Cambiado de output_number a product_output
-        responsibles: ResponsibleAssignment[];
-        organizations: OrganizationAssignment[];
-        indicators: number[];
-        distributor_orgs: number[];
-        distributor_users: number[];
-        distributor_others: DistributorOther[];
-        product_id?: number;
-      } = {
+      const payload = {
         ...formData,
-        product_output: formData.output_number, // Mapear output_number a product_output
         workpackage_id: parseInt(formData.workpackage_id),
-        workinggroup_id: formData.workinggroup_id ? parseInt(formData.workinggroup_id) : undefined,
         product_owner_id: parseInt(formData.product_owner_id),
         country_id: parseInt(formData.country_id),
         responsibles: responsibleAssignments.filter(r => r.user_id > 0),
@@ -484,24 +277,8 @@ export default function AddProductModal({
         distributor_others: distributorOthers.filter(d => d.display_name.trim() !== '')
       };
 
-      console.log('Submitting product with payload:', payload);
-      console.log('Responsibles to submit:', payload.responsibles);
-      console.log('Organizations to submit:', payload.organizations);
-      console.log('Indicators to submit:', payload.indicators);
-      console.log('Distributor orgs to submit:', payload.distributor_orgs);
-      console.log('Distributor users to submit:', payload.distributor_users);
-      console.log('Distributor others to submit:', payload.distributor_others);
-
-      // Si estamos editando, agregar el ID del producto
-      if (mode === 'edit' && editingProduct) {
-        payload.product_id = editingProduct.product_id;
-      }
-
-      const endpoint = mode === 'edit' ? '/api/update-product' : '/api/add-product';
-      const method = mode === 'edit' ? 'PUT' : 'POST';
-
-      const response = await fetch(endpoint, {
-        method: method,
+      const response = await fetch('/api/add-product', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -509,16 +286,11 @@ export default function AddProductModal({
       });
 
       if (response.ok) {
-        // Llamar al callback correspondiente según el modo
-        if (mode === 'edit' && onProductUpdated) {
-          onProductUpdated();
-        } else {
-          onProductAdded();
-        }
+        onProductAdded();
         handleClose();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || `Error ${mode === 'edit' ? 'updating' : 'creating'} product`);
+        setError(errorData.message || 'Error creating product');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -534,14 +306,13 @@ export default function AddProductModal({
       product_objective: '',
       deliverable: '',
       delivery_date: '',
+      product_output: '',
       methodology_description: '',
       gender_specific_actions: '',
       next_steps: '',
       workpackage_id: '',
-      workinggroup_id: '', // Agregar working group
       product_owner_id: '',
-      country_id: '',
-      output_number: ''
+      country_id: ''
     });
     setResponsibleAssignments([]);
     setOrganizationAssignments([]);
@@ -559,9 +330,7 @@ export default function AddProductModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">
-            {mode === 'edit' ? 'Editar Producto' : 'Crear Nuevo Producto'}
-          </h2>
+          <h2 className="text-2xl font-bold">Crear Nuevo Producto</h2>
           <Button onClick={handleClose} variant="ghost" size="sm">
             <X className="h-4 w-4" />
           </Button>
@@ -630,21 +399,13 @@ export default function AddProductModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Output *</label>
-                    <select
-                      name="output_number"
-                      value={formData.output_number || ''}
+                    <label className="block text-sm font-medium mb-2">Output del Producto</label>
+                    <Input
+                      name="product_output"
+                      value={formData.product_output}
                       onChange={handleInputChange}
-                      required
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Seleccionar Output</option>
-                      {Array.isArray(outputs) && outputs.map(output => (
-                        <option key={output.value} value={output.value}>
-                          {output.label}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Ej: OUT-1.1"
+                    />
                   </div>
 
                   <div>
@@ -657,26 +418,9 @@ export default function AddProductModal({
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Seleccionar Work Package</option>
-                      {Array.isArray(workPackages) && workPackages.map(wp => (
+                      {workPackages.map(wp => (
                         <option key={wp.workpackage_id} value={wp.workpackage_id}>
                           {wp.workpackage_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Working Group</label>
-                    <select
-                      name="workinggroup_id"
-                      value={formData.workinggroup_id}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Seleccionar Working Group</option>
-                      {Array.isArray(workingGroups) && workingGroups.map(wg => (
-                        <option key={wg.workinggroup_id} value={wg.workinggroup_id}>
-                          {wg.workinggroup_name}
                         </option>
                       ))}
                     </select>
@@ -692,7 +436,7 @@ export default function AddProductModal({
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Seleccionar Organización</option>
-                      {Array.isArray(organizations) && organizations.map(org => (
+                      {organizations.map(org => (
                         <option key={org.organization_id} value={org.organization_id}>
                           {org.organization_name}
                         </option>
@@ -710,7 +454,7 @@ export default function AddProductModal({
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Seleccionar País</option>
-                      {Array.isArray(countries) && countries.map(country => (
+                      {countries.map(country => (
                         <option key={country.country_id} value={country.country_id}>
                           {country.country_name}
                         </option>
@@ -780,7 +524,7 @@ export default function AddProductModal({
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
                             <option value={0}>Seleccionar Usuario</option>
-                            {Array.isArray(users) && users.map(user => (
+                            {users.map(user => (
                               <option key={user.user_id} value={user.user_id}>
                                 {user.user_name} {user.user_last_name}
                               </option>
@@ -844,7 +588,7 @@ export default function AddProductModal({
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
                             <option value={0}>Seleccionar Organización</option>
-                            {Array.isArray(organizations) && organizations.map(org => (
+                            {organizations.map(org => (
                               <option key={org.organization_id} value={org.organization_id}>
                                 {org.organization_name}
                               </option>
@@ -880,7 +624,7 @@ export default function AddProductModal({
               <section>
                 <h3 className="text-lg font-medium mb-4 text-gray-900">Indicadores Relacionados</h3>
                 <div className="max-h-40 overflow-y-auto border rounded p-3 bg-gray-50">
-                  {Array.isArray(indicators) && indicators.map(indicator => (
+                  {indicators.map(indicator => (
                     <label key={indicator.indicator_id} className="flex items-center space-x-2 py-1">
                       <input
                         type="checkbox"
@@ -909,7 +653,7 @@ export default function AddProductModal({
                 <div className="mb-4">
                   <h4 className="text-md font-medium mb-2 text-gray-700">Organizaciones Distribuidoras</h4>
                   <div className="max-h-32 overflow-y-auto border rounded p-3 bg-orange-50">
-                    {Array.isArray(organizations) && organizations.map(org => (
+                    {organizations.map(org => (
                       <label key={org.organization_id} className="flex items-center space-x-2 py-1">
                         <input
                           type="checkbox"
@@ -932,7 +676,7 @@ export default function AddProductModal({
                 <div className="mb-4">
                   <h4 className="text-md font-medium mb-2 text-gray-700">Usuarios Distribuidores</h4>
                   <div className="max-h-32 overflow-y-auto border rounded p-3 bg-blue-50">
-                    {Array.isArray(users) && users.map(user => (
+                    {users.map(user => (
                       <label key={user.user_id} className="flex items-center space-x-2 py-1">
                         <input
                           type="checkbox"
@@ -1006,10 +750,7 @@ export default function AddProductModal({
                 Cancelar
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting 
-                  ? (mode === 'edit' ? 'Actualizando...' : 'Creando...') 
-                  : (mode === 'edit' ? 'Actualizar Producto' : 'Crear Producto')
-                }
+                {submitting ? 'Creando...' : 'Crear Producto'}
               </Button>
             </div>
           </form>

@@ -41,6 +41,14 @@ CREATE TABLE IF NOT EXISTS workpackages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Working Groups table
+CREATE TABLE IF NOT EXISTS working_groups (
+    workinggroup_id SERIAL PRIMARY KEY,
+    workinggroup_name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Products table (extended with new fields)
 CREATE TABLE IF NOT EXISTS products (
     product_id SERIAL PRIMARY KEY,
@@ -53,6 +61,7 @@ CREATE TABLE IF NOT EXISTS products (
     gender_specific_actions TEXT,
     next_steps TEXT,
     workpackage_id INTEGER REFERENCES workpackages(workpackage_id) ON DELETE CASCADE,
+    workinggroup_id INTEGER REFERENCES working_groups(workinggroup_id),
     product_owner_id INTEGER REFERENCES organizations(organization_id),
     country_id INTEGER REFERENCES countries(country_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -176,6 +185,15 @@ INSERT INTO workpackages (workpackage_name, description) VALUES
 ('WP-004: Research', 'Environmental research and monitoring activities')
 ON CONFLICT DO NOTHING;
 
+-- Insert sample working groups
+INSERT INTO working_groups (workinggroup_name, description) VALUES 
+('Environmental Working Group', 'Focus on environmental protection and conservation'),
+('Agricultural Working Group', 'Sustainable agriculture and farming practices'),
+('Community Engagement Working Group', 'Community outreach and capacity building'),
+('Research and Development Working Group', 'Scientific research and innovation'),
+('Policy and Advocacy Working Group', 'Policy development and advocacy efforts')
+ON CONFLICT DO NOTHING;
+
 -- Update existing products table with new columns (if the table already exists)
 -- Note: This assumes the products table exists and we're adding new columns
 DO $$ 
@@ -207,6 +225,10 @@ BEGIN
     
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='next_steps') THEN
         ALTER TABLE products ADD COLUMN next_steps TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='workinggroup_id') THEN
+        ALTER TABLE products ADD COLUMN workinggroup_id INTEGER REFERENCES working_groups(workinggroup_id);
     END IF;
     
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='product_owner_id') THEN

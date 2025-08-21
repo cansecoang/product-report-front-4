@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
       gender_specific_actions,
       next_steps,
       workpackage_id,
-      workinggroup_id, // Nuevo campo working group
       product_owner_id,
       country_id,
       
@@ -44,10 +43,9 @@ export async function POST(request: NextRequest) {
         gender_specific_actions,
         next_steps,
         workpackage_id,
-        workinggroup_id,
         product_owner_id,
         country_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
       RETURNING product_id;
     `;
 
@@ -61,7 +59,6 @@ export async function POST(request: NextRequest) {
       gender_specific_actions,
       next_steps,
       workpackage_id,
-      workinggroup_id,
       product_owner_id,
       country_id
     ]);

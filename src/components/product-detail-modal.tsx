@@ -89,9 +89,10 @@ interface ProductDetailModalProps {
   product: ProductInfo;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
-export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailModalProps) {
+export function ProductDetailModal({ product, isOpen, onClose, onEdit }: ProductDetailModalProps) {
   const [detailedInfo, setDetailedInfo] = useState<DetailedProductInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -138,14 +139,26 @@ export function ProductDetailModal({ product, isOpen, onClose }: ProductDetailMo
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Product Details</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onEdit}
+                className="h-8"
+              >
+                Editar
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Content */}

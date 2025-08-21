@@ -7,6 +7,49 @@ import AddProductModal from "@/components/add-product-modal";
 import AddTaskModal from "@/components/add-task-modal";
 import { Button } from "@/components/ui/button";
 
+// Interfaces para relaciones
+interface ResponsibleAssignment {
+  user_id: number;
+  role_label: string;
+  is_primary: boolean;
+  position: number;
+}
+
+interface OrganizationAssignment {
+  organization_id: number;
+  relation_type: string;
+  position: number;
+}
+
+interface DistributorOther {
+  display_name: string;
+  contact: string;
+}
+
+// Tipo para el producto en edición
+interface EditingProduct {
+  product_id: number;
+  product_name: string;
+  product_objective: string;
+  deliverable: string;
+  delivery_date: string;
+  methodology_description: string;
+  gender_specific_actions: string;
+  next_steps: string;
+  workpackage_id: string;
+  workinggroup_id?: string; // Agregar working group
+  product_owner_id: string;
+  country_id: string;
+  output_number: string;
+  // Relaciones
+  responsibles?: ResponsibleAssignment[];
+  organizations?: OrganizationAssignment[];
+  indicators?: number[];
+  distributorOrgs?: number[];
+  distributorUsers?: number[];
+  distributorOthers?: DistributorOther[];
+}
+
 // Interfaces
 interface WorkPackage {
   id: string;
@@ -38,6 +81,8 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [editingProductData, setEditingProductData] = useState<EditingProduct | null>(null);
 
   // Limpiar localStorage al inicializar para que no haya productos pre-seleccionados
   useEffect(() => {
@@ -79,6 +124,17 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const handleProductAdded = () => {
     // Refresh or handle product addition
     console.log('Product added, refreshing...');
+    // TODO: Refrescar la lista de productos
+  };
+
+  const handleProductUpdated = () => {
+    // Manejar actualización de producto
+    console.log('Product updated, refreshing...');
+    // Refrescar los datos del producto seleccionado si existe
+    if (selectedProduct?.id) {
+      fetchProductInfo(selectedProduct.id);
+    }
+    // TODO: Refrescar la lista de productos
   };
 
   const handleAddTaskClick = () => {
@@ -92,6 +148,57 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const handleTaskAdded = () => {
     // Refresh or handle task addition
     console.log('Task added, refreshing...');
+  };
+
+  const handleEditProduct = async () => {
+    if (!selectedProduct) return;
+    
+    try {
+      console.log('Getting full product data for editing...');
+      
+      // Usar el mismo endpoint que el modal de detalle para obtener TODOS los datos
+      const response = await fetch(`/api/product-full-details?productId=${selectedProduct.id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Full product data received:', data);
+        
+        const productData = data.product;
+        
+        // Convertir al formato EditingProduct usando TODOS los datos disponibles
+        const editingData: EditingProduct = {
+          product_id: parseInt(productData.id),
+          product_name: productData.name || '',
+          product_objective: productData.objective || '',
+          deliverable: productData.deliverable || '',
+          delivery_date: productData.deliveryDate || '',
+          methodology_description: productData.methodologyDescription || '',
+          gender_specific_actions: productData.genderSpecificActions || '',
+          next_steps: productData.nextSteps || '',
+          workpackage_id: productData.workPackageId?.toString() || '',
+          workinggroup_id: productData.workingGroupId?.toString() || '', // Mapear working group
+          product_owner_id: productData.primaryOrganizationId?.toString() || '', // Mapear organización primaria
+          country_id: productData.countryId?.toString() || '', // Mapear país
+          output_number: productData.outputNumber || '',
+          responsibles: data.responsibles || [],
+          organizations: data.organizations || [],
+          indicators: data.indicators?.map((ind: { indicator_id: number }) => ind.indicator_id) || [],
+          distributorOrgs: data.distributors?.organizations?.map((org: { organization_id: number }) => org.organization_id) || [],
+          distributorUsers: data.distributors?.users?.map((user: { user_id: number }) => user.user_id) || [],
+          distributorOthers: data.distributors?.others || []
+        };
+
+        console.log('Converted editing data:', editingData);
+        
+        setEditingProductData(editingData);
+        setIsModalOpen(false); // Cerrar modal de detalle
+        setIsEditProductModalOpen(true); // Abrir modal de edición
+      } else {
+        console.error('Error fetching product data for editing');
+      }
+    } catch (error) {
+      console.error('Error preparing product data for editing:', error);
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -188,6 +295,7 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
           product={selectedProduct}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          onEdit={handleEditProduct}
         />
       )}
 
@@ -195,6 +303,16 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
         onProductAdded={handleProductAdded}
+      />
+
+      {/* Modal de edición */}
+      <AddProductModal
+        isOpen={isEditProductModalOpen}
+        onClose={() => setIsEditProductModalOpen(false)}
+        onProductAdded={handleProductAdded}
+        onProductUpdated={handleProductUpdated}
+        editingProduct={editingProductData || undefined}
+        mode="edit"
       />
 
       <AddTaskModal

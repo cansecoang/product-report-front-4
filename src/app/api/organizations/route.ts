@@ -11,9 +11,12 @@ export async function GET() {
     try {
       const query = `
         SELECT 
-          organization_id as org_id,
-          organization_name as org_name
+          organization_id,
+          organization_name,
+          organization_description,
+          organization_type
         FROM organizations
+        WHERE organization_type = 'M'
         ORDER BY organization_name
       `;
       
