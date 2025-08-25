@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import ColumnCustomizer from "@/components/column-customizer";
 import TaskDetailModal from "@/components/task-detail-modal";
@@ -48,6 +49,8 @@ interface Phase {
 }
 
 export default function TasksListPage() {
+  const searchParams = useSearchParams();
+  
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,7 +67,7 @@ export default function TasksListPage() {
     { key: 'org_name', label: 'Organization', visible: true },
   ]);
 
-  // Producto seleccionado (en producción vendrá del contexto o parámetros)
+  // 🎯 URL-FIRST: Producto seleccionado viene de la URL
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   
   // Estados para las fases y filtrado
@@ -75,6 +78,26 @@ export default function TasksListPage() {
   // Estado para el modal de detalle de tarea
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  // 🎯 URL-FIRST: Detectar productId desde la URL
+  useEffect(() => {
+    const urlProductId = searchParams.get('productId');
+    console.log('🔗 TasksList: ProductId desde URL:', urlProductId);
+    
+    if (urlProductId !== selectedProductId) {
+      console.log('📦 Product changed to:', urlProductId);
+      setSelectedProductId(urlProductId);
+      
+      if (urlProductId) {
+        setCurrentPage(1); // Reset página al cambiar producto
+        setSelectedPhaseId(null); // Reset filtro de fase
+      } else {
+        setTasks([]); // Limpiar tareas si no hay producto
+        setPhases([]); // Limpiar fases si no hay producto
+        setTotalTasks(0); // Limpiar total de tareas
+      }
+    }
+  }, [searchParams, selectedProductId]);
 
   const handleTaskClick = (taskId: number) => {
     setSelectedTaskId(taskId);
@@ -157,45 +180,34 @@ export default function TasksListPage() {
     fetchTasks(productId, page, sort, phaseId);
   }, [fetchTasks, sortConfig, selectedPhaseId]);
 
-  // useEffect para detectar cambios en el producto seleccionado
+  // 🎯 URL-FIRST: Cargar datos cuando cambia el producto desde la URL
   useEffect(() => {
-    const checkSelectedProduct = () => {
-      const productId = localStorage.getItem('selectedProductId');
-      if (productId !== selectedProductId) {
-        console.log('📦 Product changed to:', productId);
-        setSelectedProductId(productId);
-        if (productId) {
-          setCurrentPage(1); // Reset página al cambiar producto
-          setSelectedPhaseId(null); // Reset filtro de fase
-          fetchPhases(productId); // Cargar fases disponibles
-          fetchTotalTasks(productId); // Obtener total de tareas
-          loadTasks(productId, 1, sortConfig, null); // Cargar todas las tareas
-        } else {
-          setTasks([]); // Limpiar tareas si no hay producto
-          setPhases([]); // Limpiar fases si no hay producto
-          setTotalTasks(0); // Limpiar total de tareas
-        }
-      }
-    };
-
-    // Verificar producto inicial
-    checkSelectedProduct();
-
-    // Escuchar cambios en localStorage
-    const handleStorageChange = () => {
-      checkSelectedProduct();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
+    const urlProductId = searchParams.get('productId');
+    console.log('🔗 TasksList: ProductId desde URL:', urlProductId);
     
-    // También verificar cada 500ms por si se cambia en la misma pestaña
-    const interval = setInterval(checkSelectedProduct, 500);
+    if (urlProductId !== selectedProductId) {
+      console.log('📦 Product changed to:', urlProductId);
+      setSelectedProductId(urlProductId);
+      
+      if (urlProductId) {
+        setCurrentPage(1); // Reset página al cambiar producto
+        setSelectedPhaseId(null); // Reset filtro de fase
+      } else {
+        setTasks([]); // Limpiar tareas si no hay producto
+        setPhases([]); // Limpiar fases si no hay producto
+        setTotalTasks(0); // Limpiar total de tareas
+      }
+    }
+  }, [searchParams, selectedProductId]);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [selectedProductId, sortConfig, loadTasks, fetchPhases, fetchTotalTasks]);
+  // 🎯 Cargar datos cuando tenemos un productId válido
+  useEffect(() => {
+    if (selectedProductId) {
+      fetchPhases(selectedProductId);
+      fetchTotalTasks(selectedProductId);
+      loadTasks(selectedProductId, currentPage, sortConfig, selectedPhaseId);
+    }
+  }, [selectedProductId, currentPage, sortConfig, selectedPhaseId, fetchPhases, fetchTotalTasks, loadTasks]);
 
   // Función para manejar el cambio de fase
   const handlePhaseChange = (phaseId: number | null) => {
@@ -257,7 +269,7 @@ export default function TasksListPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       {/* Pestañas de filtrado por fase */}
       <div className="flex items-center justify-between">
         {/* Pestañas de fases */}

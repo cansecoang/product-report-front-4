@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,20 +22,21 @@ import {
 
 export default function HomePage() {
   return (
-    <div className="flex-1 space-y-8 p-6 max-w-7xl mx-auto animate-in fade-in duration-500">
-      {/* Page Header */}
-      <div className="space-y-3">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-          Dashboard BioFincas
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Monitoreo de biodiversidad y sostenibilidad agrícola en tiempo real
-        </p>
-      </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="space-y-8 animate-in fade-in duration-500">
+        {/* Page Header */}
+        <div className="space-y-3">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            Dashboard BioFincas
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Monitoreo de biodiversidad y sostenibilidad agrícola en tiempo real
+          </p>
+        </div>
 
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="relative bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 duration-500">
+        <Card className="relative bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300 uppercase tracking-wide">
               Productores Capacitados
@@ -56,7 +57,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="relative bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 duration-500 delay-100">
+        <Card className="relative bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 delay-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300 uppercase tracking-wide">
               Prácticas Biodiversas
@@ -77,7 +78,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="relative bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/50 dark:to-violet-950/50 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 duration-500 delay-200">
+        <Card className="relative bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/50 dark:to-violet-950/50 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 delay-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300 uppercase tracking-wide">
               Productos Activos
@@ -98,7 +99,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="relative bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/50 border-orange-200 dark:border-orange-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 duration-500 delay-300">
+        <Card className="relative bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/50 border-orange-200 dark:border-orange-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom-4 delay-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-300 uppercase tracking-wide">
               Organizaciones
@@ -358,6 +359,7 @@ export default function HomePage() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

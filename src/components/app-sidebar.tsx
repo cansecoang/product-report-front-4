@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useSearchParams } from "next/navigation"
 import {
   AudioWaveform,
   Command,
@@ -10,8 +11,7 @@ import {
   Leaf,
   Target,
   Calendar,
-  ListChecks,
-  TrendingUp
+  ListChecks
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -23,75 +23,67 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 
-// Data optimizada para BioFincas
-const data = {
-  user: {
-    name: "Admin BioFincas",
-    email: "admin@biofincas.org",
-    avatar: "https://github.com/shadcn.png",
-  },
-  teams: [
-    {
-      name: "BioFincas",
-      logo: Leaf,
-      plan: "Sostenibilidad",
+// Data optimizada para BioFincas con URLs dinámicas
+const getData = (searchParams: URLSearchParams) => {
+  const productId = searchParams.get('productId');
+  const productParam = productId ? `?productId=${productId}` : '';
+  
+  return {
+    user: {
+      name: "Admin BioFincas",
+      email: "admin@biofincas.org",
+      avatar: "https://github.com/shadcn.png",
     },
-    {
-      name: "EcoImpulso",
-      logo: AudioWaveform,
-      plan: "Biodiversidad",
-    },
-    {
-      name: "AguaVerde",
-      logo: Command,
-      plan: "Cuencas",
-    },
-  ],
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Products",
-      url: "/product",
-      icon: SquareTerminal,
-      items: [
-        {
-          title: "Task Table",
-          url: "/product/list",
-          icon: ListChecks,
-        },
-        {
-          title: "Gantt Chart",
-          url: "/product/gantt",
-          icon: Calendar,
-        },
-        {
-          title: "Metrics",
-          url: "/product/metrics",
-          icon: BarChart3,
-        },
-      ],
-    },
-    {
-      title: "Analytics",
-      url: "/analytics",
-      icon: BarChart3,
-    },
-    {
-      title: "Indicadores",
-      url: "/indicators",
-      icon: Target,
-      items: [
-        {
-          title: "Métricas de Rendimiento",
-          url: "/indicators/metrics",
-          icon: TrendingUp,
-        },
-      ],
-    },
+    teams: [
+      {
+        name: "BioFincas",
+        logo: Leaf,
+        plan: "Sostenibilidad",
+      },
+      {
+        name: "EcoImpulso",
+        logo: AudioWaveform,
+        plan: "Biodiversidad",
+      },
+      {
+        name: "AguaVerde",
+        logo: Command,
+        plan: "Cuencas",
+      },
+    ],
+    navMain: [
+      {
+        title: "Dashboard",
+        url: "/",
+        icon: Home,
+      },
+      {
+        title: "Products",
+        url: "/product",
+        icon: SquareTerminal,
+        items: [
+          {
+            title: "Task Table",
+            url: `/product/list${productParam}`, // 🎯 Preservar productId
+            icon: ListChecks,
+          },
+          {
+            title: "Gantt Chart",
+            url: `/product/gantt${productParam}`, // 🎯 Preservar productId
+            icon: Calendar,
+          },
+          {
+            title: "Metrics",
+            url: `/product/metrics${productParam}`, // 🎯 Preservar productId
+            icon: BarChart3,
+          },
+        ],
+      },
+      {
+        title: "Indicadores",
+        url: "/indicators",
+        icon: Target,
+      },
     // {
     //   title: "Configuración",
     //   url: "/settings",
@@ -127,12 +119,14 @@ const data = {
   //   {
   //     name: "Travel",
   //     url: "#",
-  //     icon: Map,
-  //   },
-  // ],
+    };
+  // Cerrar la función getData aquí
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const searchParams = useSearchParams();
+  const data = getData(searchParams);
+  
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-300 dark:border-green-800 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50" {...props}>
       <SidebarHeader className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20">

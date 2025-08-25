@@ -12,7 +12,6 @@ const routeTitles: Record<string, string> = {
   "/product/gantt": "Products", 
   "/product/metrics": "Products",
   "/indicators": "Indicadores",
-  "/indicators/metrics": "Indicadores",
   "/settings": "Configuración",
   "/settings/organizations": "Configuración",
   "/settings/statuses": "Configuración",
@@ -41,7 +40,7 @@ export function DynamicPageHeader() {
   };
 
   return (
-    <div className="bg-background border-b px-2 py-2">
+    <div className="bg-background border-b px-4 py-3 sticky top-0 z-10">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <h1 className="text-lg font-medium text-foreground">{getTitle()}</h1>

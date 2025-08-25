@@ -12,15 +12,20 @@ export default async function ProductLayout({
   const workPackages = await getWorkPackages();
   
   return (
-    <div className="flex h-screen flex-col">
-      {/* Product-specific toolbar (no header, just functionality) */}
-      <ProductToolbar 
-        initialWorkPackages={workPackages}
-      />
+    <div className="flex flex-col h-full">
+      {/* Product-specific toolbar (FIXED) */}
+      <div className="sticky top-0 z-30 bg-background border-b">
+          <ProductToolbar 
+            initialWorkPackages={workPackages}
+          />
+        
+      </div>
       
-      {/* Contenido principal */}
-      <div className="flex-1 px-6 py-4 overflow-auto">
-        {children}
+      {/* Contenido principal (SCROLLABLE por defecto, pero el Gantt manejará su propio overflow) */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 min-h-full">
+          {children}
+        </div>
       </div>
     </div>
   );

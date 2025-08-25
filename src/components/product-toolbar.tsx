@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ProductSelectors } from "@/components/product-selectors";
 import { ProductDetailModal } from "@/components/product-detail-modal";
 import AddProductModal from "@/components/add-product-modal";
@@ -77,6 +78,10 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   // 🔍 IDENTIFICADOR TEMPORAL - ELIMINAR DESPUÉS  
   console.log('🔧 ProductToolbar component loaded');
   
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
   const [selectedProduct, setSelectedProduct] = useState<ProductInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -87,32 +92,56 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   const [editingProductData, setEditingProductData] = useState<EditingProduct | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Para forzar refresh de dropdowns
 
-  // Limpiar localStorage al inicializar para que no haya productos pre-seleccionados
+  // Inicializar con productId de la URL si existe
   useEffect(() => {
-    localStorage.removeItem('selectedProductId');
-    setSelectedProduct(null);
-  }, []);
+    const urlProductId = searchParams.get('productId');
+    if (urlProductId) {
+      console.log('🔗 ProductToolbar: ProductId encontrado en URL:', urlProductId);
+      localStorage.setItem('selectedProductId', urlProductId);
+      fetchProductInfo(urlProductId);
+    } else {
+      // Limpiar localStorage si no hay productId en URL
+      localStorage.removeItem('selectedProductId');
+      setSelectedProduct(null);
+    }
+  }, [searchParams]);
 
   const handleWorkPackageChange = (workPackageId: string | null) => {
     console.log('Work Package selected:', workPackageId);
     // Reset product selection when work package changes
     setSelectedProduct(null);
+    
+    // Si hay un producto seleccionado en la URL, removerlo
+    if (searchParams.get('productId')) {
+      router.push(pathname);
+    }
   };
 
   const handleProductChange = (productId: string | null) => {
-    console.log('Product selected:', productId);
+    console.log('🔄 Product selected, updating URL:', productId);
     
-    // Store in localStorage for other components to use
     if (productId) {
+      // 🎯 URL-FIRST: Actualizar la URL (esto es la fuente de verdad)
+      const params = new URLSearchParams(searchParams);
+      params.set('productId', productId);
+      router.push(`${pathname}?${params.toString()}`);
+      
+      // También mantener localStorage para compatibilidad
       localStorage.setItem('selectedProductId', productId);
       
-      // Dispatch custom event for same-tab components
+      // Dispatch custom event para componentes legacy
       window.dispatchEvent(new CustomEvent('productChanged', { 
         detail: { productId } 
       }));
       
       fetchProductInfo(productId);
     } else {
+      // Remover productId de la URL
+      const params = new URLSearchParams(searchParams);
+      params.delete('productId');
+      const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.push(newUrl);
+      
       localStorage.removeItem('selectedProductId');
       window.dispatchEvent(new CustomEvent('productChanged', { 
         detail: { productId: null } 
@@ -273,7 +302,7 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   return (
     <>
       {/* Product-specific toolbar below the main header */}
-      <div data-component="ProductToolbar" className="bg-background border-b px-3 py-3">
+      <div data-component="ProductToolbar" className="bg-background/95 backdrop-blur-sm border-b px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between w-full">
           {/* Lado izquierdo: Dropdowns solamente */}
           <div className="flex items-center gap-4">

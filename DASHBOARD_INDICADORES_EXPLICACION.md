@@ -2,7 +2,7 @@
 
 ## 🎯 **VISIÓN GENERAL**
 
-El Dashboard de Indicadores en `/indicators/metrics` es una herramienta analítica de alto valor que proporciona insights estratégicos sobre el uso, distribución y eficiencia de los indicadores en el sistema BioFincas.
+El Dashboard de Indicadores en `/indicators` es una herramienta analítica de alto valor que proporciona insights estratégicos sobre el uso, distribución y eficiencia de los indicadores en el sistema BioFincas.
 
 ---
 

@@ -33,17 +33,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${montserrat.variable} ${geistMono.variable} antialiased`}
+        className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset>
-            {/* Dynamic Page Header - shows sidebar toggle + current section */}
+          <SidebarInset className="flex flex-col h-screen">
+            {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
             <DynamicPageHeader />
             
-            {/* Main Content */}
-            <div className="flex flex-1 flex-col py-4 pt-0">
-              {children}
+            {/* Main Content - SCROLLABLE */}
+            <div className="flex-1 overflow-auto">
+              <div className="min-h-full">
+                {children}
+              </div>
             </div>
           </SidebarInset>
         </SidebarProvider>

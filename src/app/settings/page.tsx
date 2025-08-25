@@ -45,14 +45,15 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="space-y-8">
-      {/* Action button */}
-      <div className="flex justify-end">
-        <Button>
-          <Settings className="h-4 w-4 mr-2" />
-          Configuración General
-        </Button>
-      </div>
+    <div className="p-6">
+      <div className="space-y-8 pb-8">
+        {/* Action button */}
+        <div className="flex justify-end">
+          <Button>
+            <Settings className="h-4 w-4 mr-2" />
+            Configuración General
+          </Button>
+        </div>
 
       <p className="text-muted-foreground">
         Gestión de organizaciones, estados, fases e indicadores del sistema
@@ -290,6 +291,7 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">15 configurados</p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

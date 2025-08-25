@@ -201,7 +201,7 @@ POSTGRES_URL="postgres://user:pass@db.prisma.io:5432/..."
   - 📊 Gantt - `/product/gantt`
   - 📈 Métricas - `/product/metrics`
 - 📊 **Indicadores** - `/indicators`
-  - 📈 Métricas - `/indicators/metrics`
+  - 📈 Métricas - `/indicators`
   - 📊 Analytics - `/analytics`
 - ⚙️ **Configuración** - `/settings`
 

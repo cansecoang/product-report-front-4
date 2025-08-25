@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import {
   PieChart,
   Pie,
@@ -34,6 +35,8 @@ interface ChartStatusData {
 }
 
 export default function MetricsPage() {
+  const searchParams = useSearchParams();
+  
   const [loading, setLoading] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productSummary, setProductSummary] = useState<ProductSummary | null>(null);
@@ -63,57 +66,23 @@ export default function MetricsPage() {
     }
   };
 
-  // Inicialización al montar el componente
+  // 🎯 URL-FIRST: Detectar productId desde la URL
   useEffect(() => {
-    const checkForProduct = () => {
-      const productId1 = localStorage.getItem('selectedProductId');
-      const productId2 = localStorage.getItem('productId');
-      const productId3 = sessionStorage.getItem('selectedProductId');
+    const urlProductId = searchParams.get('productId');
+    console.log('🔗 Metrics: ProductId desde URL:', urlProductId);
+    
+    if (urlProductId !== selectedProductId) {
+      console.log('📦 Product changed to:', urlProductId);
+      setSelectedProductId(urlProductId);
       
-      const productId = productId1 || productId2 || productId3;
-      
-      if (productId && productId !== selectedProductId) {
-        setSelectedProductId(productId);
-        return true;
-      } else if (productId) {
-        return true;
-      } else {
-        return false;
+      if (!urlProductId) {
+        setProductSummary(null);
+        setStatusDistribution([]);
       }
-    };
+    }
+  }, [searchParams, selectedProductId]);
 
-    // Check immediately
-    checkForProduct();
-
-    // Also check every 2 seconds in case of changes
-    const interval = setInterval(() => {
-      checkForProduct();
-    }, 2000);
-
-    // Listen for storage changes from other tabs/components
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'selectedProductId' && e.newValue) {
-        setSelectedProductId(e.newValue);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    // Custom event listener for same-tab changes
-    const handleCustomEvent = () => {
-      checkForProduct();
-    };
-
-    window.addEventListener('productChanged', handleCustomEvent);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('productChanged', handleCustomEvent);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Escuchar cambios en el producto seleccionado
+  // 🎯 Cargar métricas cuando tenemos un productId válido
   useEffect(() => {
     if (selectedProductId) {
       fetchMetrics(selectedProductId);
@@ -126,7 +95,7 @@ export default function MetricsPage() {
       { name: 'Completado', value: parseFloat(productSummary.completion_percentage) }
     ] : [];
 
-    const statusData = statusDistribution.map(item => ({
+    const statusData = statusDistribution.map((item: StatusDistribution) => ({
       name: item.name,
       value: parseInt(item.value),
       percentage: parseFloat(item.percentage)
@@ -159,7 +128,7 @@ export default function MetricsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="bg-gray-50 pt-2">
       {/* Header con resumen ejecutivo */}
       {productSummary && (
         <div className="mb-8">
@@ -235,7 +204,7 @@ export default function MetricsPage() {
         {/* Tabla de Detalles */}
         <div className="bg-white rounded-xl shadow p-6 lg:col-span-2">
           <h2 className="text-xl font-semibold mb-4">Detalles por Estado</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-clip">
             <table className="min-w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
