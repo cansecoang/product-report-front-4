@@ -237,33 +237,125 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
 
   // 🎯 Función para hacer scroll automático a la fecha actual
   const scrollToToday = () => {
-    // Verificar que tenemos tareas válidas para calcular el rango
-    if (!validTasks.length) return;
+    console.log('🎯 scrollToToday: Iniciando...');
     
-    // Recrear la escala X directamente (esto garantiza que siempre funcione)
+    // Verificar tareas válidas
+    if (!validTasks.length) {
+      console.log('⚠️ No hay tareas válidas');
+      return;
+    }
+    
+    // Verificar referencias DOM
+    if (!verticalScrollRef.current || !headerScrollRef.current) {
+      console.log('⚠️ Referencias DOM no disponibles');
+      return;
+    }
+    
+    // Recrear la escala X usando exactamente la misma lógica del useEffect
     const minStart = d3.min(validTasks, d => d.start!);
     const maxEnd = d3.max(validTasks, d => d.end!);
     const startDate = d3.timeMonday.floor(d3.timeDay.offset(minStart!, -21));
     const endDate = d3.timeMonday.ceil(d3.timeDay.offset(maxEnd!, 30));
     
-    // Recrear el ancho del chart
+    // Usar los mismos multiplicadores de zoom
     const zoomMultipliers: Record<string, number> = { 
       day: 30, week: 15, month: 8 
     };
     const dayWidth = zoomMultipliers[zoomMode];
     const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-    const calculatedWidth = totalDays * dayWidth;
+    const width = totalDays * dayWidth;
     
-    // Recrear la escala X
-    const tempXScale = d3.scaleTime()
+    // Crear la escala X exactamente como en el useEffect
+    const xScale = d3.scaleTime()
       .domain([startDate, endDate])
-      .range([0, calculatedWidth]);
+      .range([0, width]);
     
+    console.log('� Escala X creada:', {
+      domain: [startDate.toLocaleDateString(), endDate.toLocaleDateString()],
+      range: [0, width],
+      zoomMode,
+      dayWidth,
+      totalDays: Math.round(totalDays),
+      width
+    });
+    
+    // STEP 4: Calcular offset de hoy
     const today = new Date();
-    const offset = tempXScale(today);
+    const todayOffset = xScale(today);
     
-    // Hacer scroll suave a la posición de hoy con un margen de 200px
-    verticalScrollRef.current?.scrollTo({ left: offset - 200, behavior: "smooth" });
+    console.log('📅 Información fecha actual:', {
+      today: today.toLocaleDateString(),
+      todayOffset: Math.round(todayOffset),
+      isValidOffset: !isNaN(todayOffset) && isFinite(todayOffset)
+    });
+    
+    // STEP 5: Verificar dominio
+    const isInDomain = today >= startDate && today <= endDate;
+    console.log('🔍 Verificación de dominio:', {
+      isInDomain,
+      daysDifferenceFromStart: Math.round((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+      daysDifferenceFromEnd: Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    });
+    
+    if (!isInDomain) {
+      console.log('❌ ERROR: Fecha actual fuera del dominio');
+      alert(`La fecha actual (${today.toLocaleDateString()}) está fuera del rango del proyecto (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`);
+      return;
+    }
+    
+    // STEP 6: Información del contenedor y scroll
+    const containerWidth = verticalScrollRef.current.clientWidth;
+    const currentScrollLeft = verticalScrollRef.current.scrollLeft;
+    const scrollableWidth = verticalScrollRef.current.scrollWidth;
+    const scrollPosition = Math.max(0, todayOffset - (containerWidth / 2));
+    
+    console.log('📦 Información del contenedor:', {
+      containerWidth,
+      currentScrollLeft,
+      scrollableWidth,
+      maxScrollLeft: scrollableWidth - containerWidth,
+      calculatedScrollPosition: Math.round(scrollPosition),
+      todayOffsetInChart: Math.round(todayOffset)
+    });
+    
+    // STEP 7: Ejecutar scroll suave
+    console.log('🚀 Ejecutando scroll suave hacia "hoy"...');
+    
+    // Función para animación suave personalizada
+    const animateScroll = (element: HTMLElement, targetPosition: number, duration: number = 500) => {
+      const startPosition = element.scrollLeft;
+      const distance = targetPosition - startPosition;
+      const startTime = performance.now();
+      
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Usar easing suave (ease-out cubic)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentPosition = startPosition + (distance * easeOut);
+        
+        element.scrollLeft = currentPosition;
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      requestAnimationFrame(animate);
+    };
+    
+    console.log('ANTES del scroll:', {
+      verticalScrollLeft: verticalScrollRef.current.scrollLeft,
+      headerScrollLeft: headerScrollRef.current.scrollLeft,
+      targetPosition: Math.round(scrollPosition)
+    });
+    
+    // Animar scroll en ambos contenedores simultáneamente
+    animateScroll(verticalScrollRef.current, scrollPosition, 800); // 800ms para suavidad
+    animateScroll(headerScrollRef.current, scrollPosition, 800);
+    
+    console.log('✅ Animación de scroll iniciada hacia "hoy"');
   };
 
   // Función para sincronizar scroll vertical entre paneles
