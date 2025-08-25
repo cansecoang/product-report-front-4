@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import ColumnCustomizer from "@/components/column-customizer";
@@ -49,6 +49,14 @@ interface Phase {
 }
 
 export default function TasksListPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="text-muted-foreground">Cargando...</div></div>}>
+      <TasksListPageContent />
+    </Suspense>
+  );
+}
+
+function TasksListPageContent() {
   const searchParams = useSearchParams();
   
   const [tasks, setTasks] = useState<Task[]>([]);

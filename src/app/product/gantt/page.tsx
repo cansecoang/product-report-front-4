@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import GanttChart from '@/components/gantt-chart';
 
@@ -58,6 +58,14 @@ interface ApiTask {
 }
 
 export default function GanttPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="text-muted-foreground">Cargando...</div></div>}>
+      <GanttPageContent />
+    </Suspense>
+  );
+}
+
+function GanttPageContent() {
   console.log('🔧 GanttPage component initialized');
   console.log('🔧 useEffect imported?', typeof useEffect);
   console.log('🔧 useState imported?', typeof useState);

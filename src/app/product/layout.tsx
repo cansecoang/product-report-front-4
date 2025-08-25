@@ -2,6 +2,7 @@
 import "../globals.css";
 import { ProductToolbar } from "@/components/product-toolbar";
 import { getWorkPackages } from '@/lib/data-access';
+import { Suspense } from "react";
 
 export default async function ProductLayout({
   children,
@@ -15,9 +16,11 @@ export default async function ProductLayout({
     <div className="flex flex-col h-full">
       {/* Product-specific toolbar (FIXED) */}
       <div className="sticky top-0 z-30 bg-background border-b">
-          <ProductToolbar 
-            initialWorkPackages={workPackages}
-          />
+          <Suspense fallback={<div className="h-16 bg-gray-100 border-b">Cargando toolbar...</div>}>
+            <ProductToolbar 
+              initialWorkPackages={workPackages}
+            />
+          </Suspense>
         
       </div>
       

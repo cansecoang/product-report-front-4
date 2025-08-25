@@ -1111,13 +1111,9 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
           {/* Panel derecho de tareas con scroll sincronizado */}
           <div 
             ref={verticalScrollRef}
-            className="flex-1 overflow-auto hide-scrollbar" 
+            className="flex-1 overflow-auto" 
             style={{ 
-              maxWidth: "calc(100vw - 350px)",
-              scrollbarWidth: "none", /* Firefox */
-              msOverflowStyle: "none",  /* Internet Explorer 10+ */
-              paddingRight: '0px',
-              marginRight: '-17px'
+              maxWidth: "calc(100vw - 350px)"
             }}
             onScroll={(e) => {
               // Sincronizar scroll horizontal del contenido con el header
@@ -1129,8 +1125,8 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
             <svg ref={svgRef} style={{ width: `${chartWidth}px`, height: `${chartHeight}px`, maxWidth: "none" }}></svg>
           </div>
           
-          {/* CSS global para ocultar scrollbars completamente */}
-          <style jsx global>{`
+          {/* CSS local para ocultar scrollbars solo del header */}
+          <style jsx>{`
             .hide-scrollbar {
               scrollbar-width: none; /* Firefox */
               -ms-overflow-style: none; /* Internet Explorer 10+ */
@@ -1147,10 +1143,6 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
             }
             
             .hide-scrollbar::-webkit-scrollbar-thumb {
-              display: none;
-            }
-            
-            div::-webkit-scrollbar {
               display: none;
             }
           `}</style>

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from 'next/navigation';
 import {
   PieChart,
@@ -35,6 +35,14 @@ interface ChartStatusData {
 }
 
 export default function MetricsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="text-muted-foreground">Cargando métricas...</div></div>}>
+      <MetricsPageContent />
+    </Suspense>
+  );
+}
+
+function MetricsPageContent() {
   const searchParams = useSearchParams();
   
   const [loading, setLoading] = useState(false);
