@@ -24,8 +24,8 @@ interface Task {
   product_name?: string;
   indicator_id?: number;
   indicator_name?: string;
-  responsible_id?: number;
-  responsible_name?: string;
+  org_id?: number;
+  org_name?: string;
   created_at: string;
   updated_at: string;
 }
@@ -119,8 +119,8 @@ function GanttPageContent() {
           product_name: task.product_name,
           indicator_id: task.indicator_id,
           indicator_name: task.indicator_name,
-          responsible_id: task.org_id,
-          responsible_name: task.org_name,
+          org_id: task.org_id,            // Mantener org_id como org_id
+          org_name: task.org_name,        // Mantener org_name como org_name
           created_at: task.created_at || new Date().toISOString(),
           updated_at: task.updated_at || new Date().toISOString(),
         }));
@@ -202,8 +202,8 @@ function GanttPageContent() {
               product_name: task.product_name,
               indicator_id: task.indicator_id,
               indicator_name: task.indicator_name,
-              responsible_id: task.org_id,
-              responsible_name: task.org_name,
+              org_id: task.org_id,
+              org_name: task.org_name,
               created_at: task.created_at || new Date().toISOString(),
               updated_at: task.updated_at || new Date().toISOString(),
             }));

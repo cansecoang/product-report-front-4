@@ -108,6 +108,8 @@ interface FormattedTask {
   detail?: string;
   user: string;
   user_id?: number;
+  organization: string;      // 🆕 Nombre de la organización
+  organization_id?: number;  // 🆕 ID de la organización
   start: Date | null;      // ⚠️ Importante: D3 trabaja mejor con objetos Date
   end: Date | null;
   actualStart: Date | null;
@@ -164,6 +166,8 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         detail: "Evaluación completa del estado actual de la biodiversidad en la finca",
         user: "Equipo Técnico",
         user_id: 1,
+        organization: "Equipo Técnico",
+        organization_id: 1,
         start: new Date('2024-01-15'),
         end: new Date('2024-02-15'),
         actualStart: new Date('2024-01-20'),
@@ -179,6 +183,8 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         detail: "Aplicación de técnicas de agricultura sostenible y conservación",
         user: "Productores Locales",
         user_id: 2,
+        organization: "Productores Locales",
+        organization_id: 2,
         start: new Date('2024-02-01'),
         end: new Date('2024-04-01'),
         actualStart: null,
@@ -194,6 +200,8 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         detail: "Seguimiento continuo del impacto de las prácticas implementadas",
         user: "Supervisores de Campo",
         user_id: 3,
+        organization: "Supervisores de Campo",
+        organization_id: 3,
         start: new Date('2024-03-15'),
         end: new Date('2024-06-15'),
         actualStart: null,
@@ -205,25 +213,49 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     ] : [];
 
     // Transformamos las tareas del backend al formato que necesita D3
-    const formattedTasks = tasks.length > 0 ? tasks.map(t => ({
-      id: t.id,
-      task_id: t.id,
-      name: t.name,
-      detail: t.detail,
-      user: `${t.org_name || 'Sin organización'}`,
-      user_id: t.org_id,
-      start: t.start_planned ? new Date(t.start_planned) : null,
-      end: t.end_planned ? new Date(t.end_planned) : null,
-      actualStart: t.start_actual ? new Date(t.start_actual) : null,
-      actualEnd: t.end_actual ? new Date(t.end_actual) : null,
-      phase: t.phase_name || 'Sin fase',
-      status: t.status_name || 'Sin estado',
-      product_id: t.product_id,
-      checkin_communication: t.checkin_communication,
-      checkin_gender: t.checkin_gender,
-      checkin_oro_verde: t.checkin_oro_verde,
-      checkin_user: t.checkin_user,
-    })) : sampleTasks;
+    const formattedTasks = tasks.length > 0 ? tasks.map(t => {
+      // Debug completo: verificar estructura de datos
+      console.log('🔍 Datos completos de tarea:', {
+        id: t.id,
+        name: t.name,
+        org_name: t.org_name,
+        org_id: t.org_id,
+        org_name_valid: t.org_name && t.org_name.trim() !== '',
+        organization_que_se_usara: t.org_name && t.org_name.trim() !== '' 
+          ? t.org_name 
+          : 'Sin organización asignada',
+        todasLasPropiedades: Object.keys(t), // Ver qué propiedades están disponibles
+        allData: t // Ver toda la estructura
+      });
+      
+      return {
+        id: t.id,
+        task_id: t.id,
+        name: t.name,
+        detail: t.detail,
+        // Mantener el campo user para compatibilidad
+        user: t.org_name && t.org_name.trim() !== '' 
+          ? t.org_name 
+          : (t.status_name || 'Estado no definido'),
+        user_id: t.org_id,
+        // 🆕 Campos específicos de organización
+        organization: t.org_name && t.org_name.trim() !== '' 
+          ? t.org_name 
+          : 'Sin organización asignada',
+        organization_id: t.org_id,
+        start: t.start_planned ? new Date(t.start_planned) : null,
+        end: t.end_planned ? new Date(t.end_planned) : null,
+        actualStart: t.start_actual ? new Date(t.start_actual) : null,
+        actualEnd: t.end_actual ? new Date(t.end_actual) : null,
+        phase: t.phase_name || 'Sin fase',
+        status: t.status_name || 'Sin estado',
+        product_id: t.product_id,
+        checkin_communication: t.checkin_communication,
+        checkin_gender: t.checkin_gender,
+        checkin_oro_verde: t.checkin_oro_verde,
+        checkin_user: t.checkin_user,
+      };
+    }) : sampleTasks;
 
     // Filtramos solo las tareas que tienen fechas válidas
     return formattedTasks.filter(
@@ -1016,7 +1048,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         setIsTaskModalOpen(true);
       });
 
-    // 👥 PASO 18: Información adicional (usuario/organización)
+    // 👥 PASO 18: Información adicional (estado de la tarea)
     // Texto secundario debajo del nombre de la tarea
     gLeft.selectAll("text.task-user")
       .data(validTasks)
@@ -1024,7 +1056,10 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
       .append("text")
       .attr("x", 15)                    // Mismo padding que el nombre
       .attr("y", d => y(d.name)! + y.bandwidth() / 2 + 18) // Debajo del nombre
-      .text(d => d.user.length > 20 ? `${d.user.slice(0, 20)}...` : d.user) // Truncar si es muy largo
+      .text(d => {
+        const orgText = d.organization.length > 20 ? `${d.organization.slice(0, 20)}...` : d.organization;
+        return `${orgText}`; // Solo el nombre de la organización
+      })
       .attr("fill", "#64748b")          // Color más suave (gris)
       .attr("font-size", "11px");       // Fuente más pequeña
 
@@ -1289,9 +1324,15 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         >
           <div className="space-y-1">
             <p className="font-semibold text-sm text-foreground">{tooltipData.name}</p>
-            <p className="text-xs text-muted-foreground">{tooltipData.user}</p>
             <p className="text-xs text-muted-foreground">
-              {tooltipData.start?.toLocaleDateString()} - {tooltipData.end?.toLocaleDateString()}
+              <span className="font-medium">Estado:</span> {tooltipData.status}
+            </p>
+            {/* 🏢 MOSTRAR ORGANIZACIÓN */}
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Organización:</span> {tooltipData.organization}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Período:</span> {tooltipData.start?.toLocaleDateString()} - {tooltipData.end?.toLocaleDateString()}
             </p>
             {/* 🎨 Indicador de fase con color */}
             <div className="flex items-center space-x-2">
@@ -1299,7 +1340,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
                 className="w-2 h-2 rounded-full" 
                 style={{ backgroundColor: phaseColors[tooltipData.phase as keyof typeof phaseColors] || "#ccc" }}
               ></div>
-              <span className="text-xs">{tooltipData.phase}</span>
+              <span className="text-xs font-medium">{tooltipData.phase}</span>
             </div>
           </div>
         </div>
