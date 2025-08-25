@@ -129,6 +129,11 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
   const fixedRef = useRef<SVGSVGElement>(null);        // SVG del panel izquierdo (nombres de tareas)
   const svgRef = useRef<SVGSVGElement>(null);          // SVG principal del timeline
   
+  // 🆕 Referencias para headers fijos
+  const headerLeftRef = useRef<SVGSVGElement>(null);     // SVG del header izquierdo (etiquetas)
+  const headerTimelineRef = useRef<SVGSVGElement>(null); // SVG del header del timeline (fechas/fases)
+  const headerScrollRef = useRef<HTMLDivElement>(null);  // Contenedor de scroll del header (div interno)
+  
   // 📅 Estado para controlar el nivel de zoom del timeline
   const [zoomMode, setZoomMode] = useState<"day" | "week" | "month">("day");
   
@@ -352,17 +357,24 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
 
     // 🎨 PASO 7: Configurar el SVG principal (timeline)
     // d3.select() es como querySelector pero para D3
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Limpiamos cualquier contenido previo
-    svg.attr("width", width).attr("height", chartHeight + 140); // Establecemos dimensiones + espacio para header
+    // ===============================
+    // 📅 CREAR HEADER FIJO (timeline)
+    // ===============================
+    const headerSvg = d3.select(headerTimelineRef.current);
+    headerSvg.selectAll("*").remove(); // Limpiar contenido previo
+    headerSvg.attr("width", width).attr("height", 140); // Header fijo de 140px
     
-    //  Creamos un grupo (g) para el contenido principal
-    // Los grupos en SVG son como divs en HTML - organizan elementos relacionados
-    const g = svg.append("g").attr("transform", `translate(0,140)`); // Movemos 140px hacia abajo para el header
-
-    // 📅 PASO 8: Crear el header completo (MESES, SEMANAS, FECHAS Y FASES)
-    // Implementación del header completo como en el código de referencia con soporte para zoom
-    const header = svg.append("g").attr("transform", `translate(0,30)`);
+    const header = headerSvg.append("g").attr("transform", `translate(0,30)`);
+    
+    // ===============================
+    // 📊 CREAR SVG DE CONTENIDO (solo tareas)
+    // ===============================
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove(); // Limpiar contenido previo  
+    svg.attr("width", width).attr("height", chartHeight); // Solo altura del contenido, sin header
+    
+    // Grupo para el contenido principal (sin offset porque no hay header aquí)
+    const g = svg.append("g");
     
     // 🔍 Determinar intervalos de tiempo basados en el modo de zoom
     let timeIntervals: Date[];
@@ -789,17 +801,15 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
       .text(`Today (${d3.timeFormat("%d/%m/%Y")(today)})`)
       .attr("class", "text-xs text-gray-800 font-semibold");
 
-    // 🎨 PASO 15: Crear el panel izquierdo fijo (nombres de tareas)
-    // Este SVG no se mueve horizontalmente, solo muestra los nombres
-    const leftSVG = d3.select(fixedRef.current);
-    leftSVG.selectAll("*").remove();  // Limpiar contenido previo
-    leftSVG.attr("width", 249.5).attr("height", chartHeight + 140); // Mismas dimensiones que el principal
-    
-    // 🏷️ PASO 15.1: Agregar etiquetas del header en el panel izquierdo
-    // Estas etiquetas indican qué significa cada fila del header del timeline
+    // ===============================
+    // 🏷️ CREAR HEADER IZQUIERDO (etiquetas)
+    // ===============================
+    const headerLeftSvg = d3.select(headerLeftRef.current);
+    headerLeftSvg.selectAll("*").remove(); // Limpiar contenido previo
+    headerLeftSvg.attr("width", 249.5).attr("height", 140); // Header fijo de 140px
     
     // Fondo de la sección "Month" (alineado con el header de meses del timeline)
-    leftSVG.append("rect")
+    headerLeftSvg.append("rect")
       .attr("x", 0)
       .attr("y", 30)
       .attr("width", 249.5)
@@ -820,7 +830,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         topHeaderLabel = "Month";
     }
     
-    leftSVG.append("text")
+    headerLeftSvg.append("text")
       .attr("x", 10)
       .attr("y", 45)
       .text(topHeaderLabel)
@@ -843,7 +853,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     }
     
     leftHeaderLabels.forEach((label, i) => {
-      leftSVG.append("text")
+      headerLeftSvg.append("text")
         .attr("x", 10)
         .attr("y", i * 15 + 65) // Y = 65, 80 (alineado con el header de semanas/días)
         .text(label)
@@ -851,7 +861,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     });
     
     // Fondo de la sección "Phase" (alineado con el header de fases del timeline)
-    leftSVG.append("rect")
+    headerLeftSvg.append("rect")
       .attr("x", 0)
       .attr("y", 85)
       .attr("width", 249.5)
@@ -859,23 +869,30 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
       .attr("fill", "#f3f4f6"); // Fondo gris claro
     
     // Texto "Phase"
-    leftSVG.append("text")
+    headerLeftSvg.append("text")
       .attr("x", 10)
       .attr("y", 100)
       .text("Phase")
       .attr("class", "text-xs font-bold fill-gray-800");
     
     // Línea horizontal de separación (alineada con la del timeline)
-    leftSVG.append("line")
+    headerLeftSvg.append("line")
       .attr("x1", 0)
       .attr("x2", 249.5)
-      .attr("y1", 145) // Y = 30 + 115 (mismo que en el timeline)
-      .attr("y2", 145)
+      .attr("y1", 115) // Ajustado para el header de 140px
+      .attr("y2", 115)
       .attr("stroke", "#374151")
       .attr("stroke-width", 2);
+
+    // ===============================
+    // 📋 CREAR PANEL IZQUIERDO (solo tareas)
+    // ===============================
+    const leftSVG = d3.select(fixedRef.current);
+    leftSVG.selectAll("*").remove();  // Limpiar contenido previo
+    leftSVG.attr("width", 249.5).attr("height", chartHeight); // Solo altura del contenido, sin header
     
-    // Grupo para el contenido del panel izquierdo (mismo offset que el principal)
-    const gLeft = leftSVG.append("g").attr("transform", `translate(0,140)`);
+    // Grupo para el contenido del panel izquierdo (sin offset porque no hay header aquí)
+    const gLeft = leftSVG.append("g");
     
     // 🎨 PASO 16: Fondo alternado para el panel izquierdo
     // Mantener consistencia visual con el panel principal
@@ -956,18 +973,13 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     closeTaskModal();     // Cerrar modal
   };
 
-  // INFORMACIÓN SOBRE EL LÍMITE DE TAREAS
-  const maxVisibleTasks = 8;
-  const totalTasks = validTasks.length;
-  const hasMoreTasks = totalTasks > maxVisibleTasks;
-  const hiddenTasksCount = hasMoreTasks ? totalTasks - maxVisibleTasks : 0;
-
   // 🎨 RENDERIZADO DEL COMPONENTE
   return (
-    <div className="bg-card rounded-lg border shadow-sm w-full overflow-hidden" style={{ maxWidth: "100%" }}>
+    <>
+      <div className="bg-card rounded-lg border shadow-sm w-full overflow-hidden" style={{ maxWidth: "100%" }}>
       
       {/* 🎯 HEADER: Leyenda de fases y controles de zoom */}
-      <div className="border-b px-6 py-3 bg-muted/30 flex justify-between items-center">
+      <div className="border-b px-6 py-0 bg-muted/30 flex justify-between items-center h-12">{/* Eliminado py completamente y agregado altura fija */}
         
         {/* 🎨 Leyenda de colores por fase */}
         <div className="flex items-center space-x-4">
@@ -1048,27 +1060,100 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
       4. Estados separados: containerHeight vs chartHeight
       5. 🆕 Contenido sincronizado: Un solo elemento scrolleable con ambos paneles
       */}
-      <div 
-        className="flex w-full"
-        style={{ 
-          height: `${containerHeight}px`, 
-          maxHeight: `${containerHeight}px` 
-        }}
-      >
+      <div className="flex flex-col h-full bg-white relative" style={{ margin: "0", padding: "0" }}>
         
-        {/* 📋 Panel izquierdo fijo (nombres de tareas) - SIN SCROLL INDEPENDIENTE */}
-        <div className="bg-muted/30 border-r flex-shrink-0 overflow-hidden" style={{ width: "230px" }}>
-          <svg ref={fixedRef} style={{ width: "100%", height: `${chartHeight + 140}px` }}></svg>
+        {/* 📅 HEADER FIJO - No se mueve con scroll vertical */}
+        <div className="flex w-full bg-white border-b border-gray-200 sticky top-0 z-10" style={{ height: "140px", margin: "0", padding: "0" }}>
+          {/* Header del panel izquierdo */}
+          <div className="bg-muted/30 border-r flex-shrink-0" style={{ width: "230px", height: "140px" }}>
+            <svg ref={headerLeftRef} style={{ width: "100%", height: "140px" }}></svg>
+          </div>
+          
+          {/* Header del timeline */}
+          <div 
+            className="flex-1 overflow-hidden" 
+            style={{ maxWidth: "calc(100vw - 350px)", height: "140px" }}
+          >
+            <div 
+              ref={headerScrollRef}
+              className="w-full h-full overflow-x-auto hide-scrollbar"
+              style={{ 
+                scrollbarWidth: "none", /* Firefox */
+                msOverflowStyle: "none",  /* Internet Explorer 10+ */
+                paddingBottom: '0px',
+                marginBottom: '-17px'
+              }}
+              onScroll={(e) => {
+                // Sincronizar scroll horizontal del header con el contenido
+                if (verticalScrollRef.current) {
+                  verticalScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                }
+              }}
+            >
+              <svg ref={headerTimelineRef} style={{ width: `${chartWidth}px`, height: "140px", maxWidth: "none" }}></svg>
+            </div>
+          </div>
         </div>
-        
-        {/* 📈 Panel derecho con scroll sincronizado */}
+
+        {/* 📊 ÁREA DE CONTENIDO SCROLLEABLE - Solo las tareas se mueven */}
         <div 
-          ref={verticalScrollRef}
-          className="flex-1 overflow-auto" 
-          style={{ maxWidth: "calc(100vw - 350px)" }}
+          className="flex w-full flex-1 overflow-hidden"
+          style={{ 
+            height: `${containerHeight - 140}px`, 
+            maxHeight: `${containerHeight - 140}px` 
+          }}
         >
-          {/* 🎨 SVG principal que contiene todo el timeline y las barras */}
-          <svg ref={svgRef} style={{ width: `${chartWidth}px`, height: `${chartHeight + 140}px`, maxWidth: "none" }}></svg>
+          {/* Panel izquierdo de tareas */}
+          <div className="bg-muted/30 border-r flex-shrink-0 overflow-hidden" style={{ width: "230px" }}>
+            <svg ref={fixedRef} style={{ width: "100%", height: `${chartHeight}px` }}></svg>
+          </div>
+          
+          {/* Panel derecho de tareas con scroll sincronizado */}
+          <div 
+            ref={verticalScrollRef}
+            className="flex-1 overflow-auto hide-scrollbar" 
+            style={{ 
+              maxWidth: "calc(100vw - 350px)",
+              scrollbarWidth: "none", /* Firefox */
+              msOverflowStyle: "none",  /* Internet Explorer 10+ */
+              paddingRight: '0px',
+              marginRight: '-17px'
+            }}
+            onScroll={(e) => {
+              // Sincronizar scroll horizontal del contenido con el header
+              if (headerScrollRef.current) {
+                headerScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
+              }
+            }}
+          >
+            <svg ref={svgRef} style={{ width: `${chartWidth}px`, height: `${chartHeight}px`, maxWidth: "none" }}></svg>
+          </div>
+          
+          {/* CSS global para ocultar scrollbars completamente */}
+          <style jsx global>{`
+            .hide-scrollbar {
+              scrollbar-width: none; /* Firefox */
+              -ms-overflow-style: none; /* Internet Explorer 10+ */
+            }
+            
+            .hide-scrollbar::-webkit-scrollbar {
+              display: none; /* WebKit */
+              width: 0 !important;
+              height: 0 !important;
+            }
+            
+            .hide-scrollbar::-webkit-scrollbar-track {
+              display: none;
+            }
+            
+            .hide-scrollbar::-webkit-scrollbar-thumb {
+              display: none;
+            }
+            
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </div>
 
@@ -1153,6 +1238,7 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
         productId={tasks[0]?.product_id?.toString() || null}
       />
     </div>
+    </>
   );
 };
 
