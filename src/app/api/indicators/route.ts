@@ -27,16 +27,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching indicators:', error);
     
-    // Mock data as fallback
-    const mockIndicators = [
-      { indicator_id: 1, indicator_code: '1.1', indicator_name: 'Productividad', indicator_description: 'Producción por hectárea', output_number: '1' },
-      { indicator_id: 2, indicator_code: '2.1', indicator_name: 'Sostenibilidad', indicator_description: 'Certificaciones ambientales', output_number: '2' },
-      { indicator_id: 3, indicator_code: '3.1', indicator_name: 'Calidad', indicator_description: 'Estándares de calidad', output_number: '3' },
-      { indicator_id: 4, indicator_code: '4.1', indicator_name: 'Innovación', indicator_description: 'Tecnologías implementadas', output_number: '4' },
-      { indicator_id: 5, indicator_code: '5.1', indicator_name: 'Capacitación', indicator_description: 'Agricultores capacitados', output_number: '5' },
-      { indicator_id: 6, indicator_code: '6.1', indicator_name: 'Impacto Social', indicator_description: 'Familias beneficiadas', output_number: '6' }
-    ];
-
-    return NextResponse.json({ indicators: mockIndicators });
+    // Return empty array instead of mock data to show real state
+    return NextResponse.json({ indicators: [] });
   }
 }

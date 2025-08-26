@@ -63,15 +63,15 @@ interface IndicatorsAnalyticsData {
   productMetrics: ProductMetric[];
 }
 
-export default function IndicatorsPage() {
+export default function IndicatorsDashboardPage() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="text-muted-foreground">Cargando...</div></div>}>
-      <IndicatorsContent />
+      <IndicatorsDashboardContent />
     </Suspense>
   );
 }
 
-function IndicatorsContent() {
+function IndicatorsDashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -107,7 +107,7 @@ function IndicatorsContent() {
     if (output) params.set('output', output);
     if (indicator) params.set('indicator', indicator);
     
-    const newURL = `/indicators${params.toString() ? `?${params.toString()}` : ''}`;
+    const newURL = `/indicators/dashboard${params.toString() ? `?${params.toString()}` : ''}`;
     console.log('🔄 Updating URL to:', newURL);
     router.push(newURL);
   };
@@ -225,7 +225,7 @@ function IndicatorsContent() {
   }, [data, statusColors]);
 
   return (
-    <div className="container mx-auto space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header con dropdowns */}
       <IndicatorsHeader
         selectedOutput={selectedOutput}
@@ -257,7 +257,7 @@ function IndicatorsContent() {
 
       {/* Dashboard con datos */}
       {data && !loading && chartData && (
-        <div className="px-6">
+        <>
           {/* Métricas principales */}
           {data.indicatorMetrics.map((indicator) => (
             <div key={indicator.indicator_id} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -305,7 +305,7 @@ function IndicatorsContent() {
           ))}
 
           {/* Gráficos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Gráfico de barras por país */}
             <div className="bg-white rounded-lg border p-6">
               <h3 className="text-lg font-semibold mb-4">Progreso por País</h3>
@@ -370,8 +370,8 @@ function IndicatorsContent() {
           </div>
 
           {/* Tabla de productos */}
-          <div className="bg-white rounded-lg border  space-y-6">
-            <div className="p-6 border-b"> 
+          <div className="bg-white rounded-lg border">
+            <div className="p-6 border-b">
               <h3 className="text-lg font-semibold">Productos del Indicador</h3>
             </div>
             <div className="overflow-x-auto">
@@ -441,7 +441,7 @@ function IndicatorsContent() {
               </table>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

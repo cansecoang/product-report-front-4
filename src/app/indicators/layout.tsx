@@ -8,10 +8,8 @@ export default async function IndicatorsLayout({
 }) {
   
   return (
-    <div className="p-6">
       <div className="min-h-full">
         {children}
       </div>
-    </div>
   );
 }
