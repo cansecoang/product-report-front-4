@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   PieChart,
@@ -14,11 +14,65 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-  LineChart,
-  Line,
 } from "recharts";
 import { Target, MapPin, Package, Calendar } from "lucide-react";
 import { IndicatorsHeader } from "@/components/indicators-header";
+
+// Componente Progress Bar personalizado
+interface ProgressBarProps {
+  value: number;
+  max?: number;
+  title: string;
+  subtitle?: string;
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({ value, max = 100, title, subtitle }) => {
+  const percentage = Math.min(Math.max(value, 0), max);
+  
+  // Colores basados en el valor
+  const getColor = (val: number) => {
+    if (val >= 80) return "bg-green-500"; // Verde
+    if (val >= 60) return "bg-yellow-500"; // Amarillo
+    if (val >= 40) return "bg-orange-500"; // Naranja
+    return "bg-red-500"; // Rojo
+  };
+  
+  const getBgColor = (val: number) => {
+    if (val >= 80) return "bg-green-50"; // Verde claro
+    if (val >= 60) return "bg-yellow-50"; // Amarillo claro
+    if (val >= 40) return "bg-orange-50"; // Naranja claro
+    return "bg-red-50"; // Rojo claro
+  };
+  
+  const getTextColor = (val: number) => {
+    if (val >= 80) return "text-green-700"; // Verde
+    if (val >= 60) return "text-yellow-700"; // Amarillo
+    if (val >= 40) return "text-orange-700"; // Naranja
+    return "text-red-700"; // Rojo
+  };
+
+  return (
+    <div className={`p-4 rounded-lg border ${getBgColor(percentage)}`}>
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-sm font-medium text-gray-900 max-w-[200px] truncate">{title}</h4>
+        <span className={`text-lg font-bold ${getTextColor(percentage)}`}>
+          {percentage.toFixed(1)}%
+        </span>
+      </div>
+      
+      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+        <div 
+          className={`h-3 rounded-full transition-all duration-1000 ease-out ${getColor(percentage)}`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      
+      {subtitle && (
+        <p className="text-xs text-gray-600">{subtitle}</p>
+      )}
+    </div>
+  );
+};
 
 // Interfaces para los datos
 interface IndicatorMetric {
@@ -54,13 +108,21 @@ interface ProductMetric {
   total_tasks: number;
   completed_tasks: number;
   completion_percentage: number;
+  overdue_tasks: number;
+  schedule_adherence_percentage: number;
   delivery_status: "En Tiempo" | "Retrasado" | "Vence Hoy";
+}
+
+interface TaskStatusMetric {
+  status_name: string;
+  task_count: number;
 }
 
 interface IndicatorsAnalyticsData {
   indicatorMetrics: IndicatorMetric[];
   countryMetrics: CountryMetric[];
   productMetrics: ProductMetric[];
+  taskStatusMetrics: TaskStatusMetric[];
 }
 
 export default function IndicatorsPage() {
@@ -174,16 +236,39 @@ function IndicatorsContent() {
 
   // Colores para gráficos
   const statusColors = useMemo(() => ({
+    // Status de delivery (legacy)
     "En Tiempo": "#22c55e",
-    "Retrasado": "#ef4444",
+    "Retrasado": "#ef4444", 
     "Vence Hoy": "#f59e0b",
+    // Status de tareas
+    "Completed": "#10b981",     // Verde
+    "In Progress": "#3b82f6",   // Azul
+    "Not Started": "#6b7280",   // Gris
+    "Sin Estado": "#f3f4f6",    // Gris claro
+    "Pending": "#f59e0b",       // Amarillo
+    "On Hold": "#ef4444",       // Rojo
   }), []);
+
+  // Función para obtener color de status
+  const getStatusColor = useCallback((statusName: string) => {
+    return statusColors[statusName as keyof typeof statusColors] || "#6b7280";
+  }, [statusColors]);
 
   // Datos procesados para gráficos
   const chartData = useMemo(() => {
-    if (!data) return null;
+    console.log('🎨 Processing chart data, data exists:', !!data);
+    if (!data) {
+      console.log('🎨 No data available for charts');
+      return null;
+    }
 
-    const { countryMetrics, productMetrics } = data;
+    console.log('🎨 Data structure:', { 
+      indicatorMetrics: data.indicatorMetrics?.length,
+      countryMetrics: data.countryMetrics?.length,
+      productMetrics: data.productMetrics?.length 
+    });
+
+    const { countryMetrics, productMetrics, taskStatusMetrics } = data;
     
     // Datos para el gráfico de barras de países
     const countryChartData = countryMetrics.map((country) => ({
@@ -194,35 +279,31 @@ function IndicatorsContent() {
       progreso: Number(country.country_completion_rate.toFixed(1)),
     }));
 
-    // Datos para el gráfico de pie de estado de entrega
-    const deliveryStatusData = productMetrics.reduce((acc, product) => {
-      const status = product.delivery_status;
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const pieChartData = Object.entries(deliveryStatusData).map(([status, count]) => ({
-      name: status,
-      value: count,
-      color: statusColors[status as keyof typeof statusColors],
+    // Datos para el gráfico de pie de status de tareas (ACTUALIZADO)
+    const pieChartData = taskStatusMetrics.map((statusMetric) => ({
+      name: statusMetric.status_name,
+      value: statusMetric.task_count,
+      color: getStatusColor(statusMetric.status_name),
     }));
 
-    // Datos para el gráfico de líneas de progreso por producto
-    const progressChartData = productMetrics.map((product) => ({
-      name: product.product_name.length > 20 
-        ? product.product_name.substring(0, 20) + "..." 
+    // Datos para los gauge charts de adherencia al cronograma
+    const adherenceGaugeData = productMetrics.map((product) => ({
+      product_id: product.product_id,
+      product_name: product.product_name.length > 25 
+        ? product.product_name.substring(0, 25) + "..." 
         : product.product_name,
-      progreso: Number(product.completion_percentage.toFixed(1)),
-      tareas_totales: product.total_tasks,
-      tareas_completadas: product.completed_tasks,
+      adherence_percentage: Number(product.schedule_adherence_percentage.toFixed(1)),
+      overdue_tasks: product.overdue_tasks,
+      total_tasks: product.total_tasks,
+      completed_tasks: product.completed_tasks,
     }));
 
     return {
       countryChartData,
       pieChartData,
-      progressChartData,
+      adherenceGaugeData,
     };
-  }, [data, statusColors]);
+  }, [data, getStatusColor]);
 
   return (
     <div className="container mx-auto space-y-6">
@@ -325,7 +406,7 @@ function IndicatorsContent() {
 
             {/* Gráfico de pie de estados de entrega */}
             <div className="bg-white rounded-lg border p-6">
-              <h3 className="text-lg font-semibold mb-4">Estado de Entregas</h3>
+              <h3 className="text-lg font-semibold mb-4">Status de Tareas</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -348,25 +429,32 @@ function IndicatorsContent() {
             </div>
           </div>
 
-          {/* Gráfico de líneas de progreso por producto */}
+          {/* Gauge Charts - Adherencia al Cronograma por Producto */}
           <div className="bg-white rounded-lg border p-6">
-            <h3 className="text-lg font-semibold mb-4">Progreso por Producto</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData.progressChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="progreso"
-                  stroke="#8884d8"
-                  strokeWidth={2}
-                  name="Progreso (%)"
+            <h3 className="text-lg font-semibold mb-4">Adherencia al Cronograma por Producto</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {chartData.adherenceGaugeData.map((product) => (
+                <div key={product.product_id}>
+                  <ProgressBar
+                    value={product.adherence_percentage}
+                    title={product.product_name}
+                    subtitle={`Tareas: ${product.total_tasks} | Vencidas: ${product.overdue_tasks} | Completadas: ${product.completed_tasks}`}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Promedio general */}
+            <div className="mt-6 pt-4 border-t">
+              <div className="max-w-md mx-auto">
+                <h4 className="text-md font-semibold text-gray-700 mb-4 text-center">Adherencia Promedio del Indicador</h4>
+                <ProgressBar
+                  value={chartData.adherenceGaugeData.reduce((sum, p) => sum + p.adherence_percentage, 0) / chartData.adherenceGaugeData.length}
+                  title="Promedio General"
+                  subtitle={`Basado en ${chartData.adherenceGaugeData.length} productos`}
                 />
-              </LineChart>
-            </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
           {/* Tabla de productos */}

@@ -134,7 +134,7 @@ export function IndicatorsHeader({
 
   // Obtener información del indicador seleccionado
   const selectedIndicatorInfo = indicators.find(
-    ind => ind.indicator_id.toString() === selectedIndicator
+    ind => ind.indicator_code === selectedIndicator
   );
 
   return (
@@ -183,7 +183,7 @@ export function IndicatorsHeader({
               <SelectContent>
                 <SelectItem value="all">All Indicators</SelectItem>
                 {indicators.map((indicator) => (
-                  <SelectItem key={indicator.indicator_id} value={indicator.indicator_id.toString()}>
+                  <SelectItem key={indicator.indicator_id} value={indicator.indicator_code}>
                     {indicator.indicator_code} - {indicator.indicator_name}
                   </SelectItem>
                 ))}

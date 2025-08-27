@@ -1,42 +1,6 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
-interface IndicatorMetric {
-  indicator_id: number;
-  indicator_code: string;
-  indicator_name: string;
-  output_number: string;
-  products_using: number;
-  countries_covered: number;
-  total_tasks: number;
-  completed_tasks: number;
-  completion_percentage: number;
-  avg_delay_days: number;
-  working_groups_using: number;
-}
-
-interface CountryMetric {
-  country_name: string;
-  total_products: number;
-  total_tasks: number;
-  completed_tasks: number;
-  country_completion_rate: number;
-  overdue_products: number;
-}
-
-interface ProductMetric {
-  product_id: number;
-  product_name: string;
-  country_id: number;
-  country_name: string;
-  indicator_code: string;
-  indicator_name: string;
-  total_tasks: number;
-  completed_tasks: number;
-  completion_percentage: number;
-  delivery_status: string;
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -49,16 +13,17 @@ export async function GET(request: Request) {
     if (indicatorFilter && indicatorFilter !== 'all') {
       console.log('🧪 Debug: Checking basic data for indicator', indicatorFilter);
       
-      // Verificar que el indicador existe
-      const indicatorCheck = await pool.query('SELECT * FROM indicators WHERE indicator_id = $1', [indicatorFilter]);
+      // Verificar que el indicador existe (buscar por código, no por ID)
+      const indicatorCheck = await pool.query('SELECT * FROM indicators WHERE indicator_code = $1', [indicatorFilter]);
       console.log('📋 Indicator exists:', indicatorCheck.rows);
       
       // Verificar productos asociados al indicador
       const productCheck = await pool.query(`
-        SELECT p.*, pi.indicator_id 
+        SELECT p.*, pi.indicator_id, i.indicator_code 
         FROM products p 
         INNER JOIN product_indicators pi ON p.product_id = pi.product_id 
-        WHERE pi.indicator_id = $1
+        INNER JOIN indicators i ON pi.indicator_id = i.indicator_id
+        WHERE i.indicator_code = $1
       `, [indicatorFilter]);
       console.log('📦 Products for indicator:', productCheck.rows);
       
@@ -68,14 +33,41 @@ export async function GET(request: Request) {
         FROM tasks t 
         INNER JOIN products p ON t.product_id = p.product_id
         INNER JOIN product_indicators pi ON p.product_id = pi.product_id
+        INNER JOIN indicators i ON pi.indicator_id = i.indicator_id
         LEFT JOIN status s ON t.status_id = s.status_id
-        WHERE pi.indicator_id = $1
+        WHERE i.indicator_code = $1
       `, [indicatorFilter]);
       console.log('📋 Tasks for indicator:', taskCheck.rows);
     }
 
-    let baseQuery = `
-      WITH indicator_metrics AS (
+    const baseQuery = `-- Query structure for debugging reference only`;
+
+    const queryParams: string[] = [];
+    const whereConditions: string[] = [];
+
+    // Aplicar filtros
+    if (outputFilter && outputFilter !== 'all') {
+      whereConditions.push(`i.output_number = $${queryParams.length + 1}`);
+      queryParams.push(outputFilter);
+    }
+
+    if (indicatorFilter && indicatorFilter !== 'all') {
+      whereConditions.push(`i.indicator_code = $${queryParams.length + 1}`);
+      queryParams.push(indicatorFilter);
+    }
+
+    console.log('🔍 Final query:', baseQuery);
+    console.log('🔍 Query params:', queryParams);
+
+    // SIMPLIFIED APPROACH: Query each CTE separately
+    let indicatorMetrics = [];
+    let countryMetrics = [];
+    let productMetrics = [];
+    let taskStatusMetrics = [];
+
+    try {
+      // 1. Query indicator metrics
+      const indicatorQuery = `
         SELECT
           i.indicator_id,
           i.indicator_code,
@@ -89,69 +81,24 @@ export async function GET(request: Request) {
             (COUNT(DISTINCT CASE WHEN s.status_name = 'Completed' THEN t.task_id END) * 100.0 / 
              NULLIF(COUNT(DISTINCT t.task_id), 0)), 0
           ) as completion_percentage,
-          -- AVG delay calculation simplified for now
           0 as avg_delay_days,
           COUNT(DISTINCT wg.workinggroup_id) as working_groups_using
         FROM indicators i
-        LEFT JOIN product_indicators pi ON i.indicator_id = pi.indicator_id
-        LEFT JOIN products p ON pi.product_id = p.product_id
+        INNER JOIN product_indicators pi ON i.indicator_id = pi.indicator_id
+        INNER JOIN products p ON pi.product_id = p.product_id
         LEFT JOIN tasks t ON p.product_id = t.product_id
         LEFT JOIN status s ON t.status_id = s.status_id
         LEFT JOIN workinggroup wg ON p.workinggroup_id = wg.workinggroup_id
-    `;
-
-    const queryParams: string[] = [];
-    const whereConditions: string[] = [];
-
-    // Aplicar filtros
-    if (outputFilter && outputFilter !== 'all') {
-      whereConditions.push(`i.output_number = $${queryParams.length + 1}`);
-      queryParams.push(outputFilter);
-    }
-
-    if (indicatorFilter && indicatorFilter !== 'all') {
-      whereConditions.push(`i.indicator_id = $${queryParams.length + 1}`);
-      queryParams.push(indicatorFilter);
-    }
-
-    if (whereConditions.length > 0) {
-      baseQuery += ` WHERE ${whereConditions.join(' AND ')}`;
-    }
-
-    baseQuery += `
+        WHERE ${whereConditions.length > 0 ? whereConditions.join(' AND ') : '1=1'}
         GROUP BY i.indicator_id, i.indicator_code, i.indicator_name, i.output_number
-      ),
-      country_metrics AS (
-        SELECT 
-          c.country_name,
-          COUNT(DISTINCT p.product_id) as total_products,
-          COUNT(DISTINCT t.task_id) as total_tasks,
-          COUNT(DISTINCT CASE WHEN s.status_name = 'Completed' THEN t.task_id END) as completed_tasks,
-          COALESCE(
-            (COUNT(DISTINCT CASE WHEN s.status_name = 'Completed' THEN t.task_id END) * 100.0 / 
-             NULLIF(COUNT(DISTINCT t.task_id), 0)), 0
-          ) as country_completion_rate,
-          COUNT(DISTINCT CASE 
-            WHEN t.end_date_planned < NOW() AND s.status_name != 'Completed' 
-            THEN p.product_id 
-          END) as overdue_products
-        FROM countries c
-        LEFT JOIN products p ON c.country_id = p.country_id
-        LEFT JOIN product_indicators pi ON p.product_id = pi.product_id
-        LEFT JOIN indicators i ON pi.indicator_id = i.indicator_id
-        LEFT JOIN tasks t ON p.product_id = t.product_id
-        LEFT JOIN status s ON t.status_id = s.status_id
-    `;
+      `;
+      
+      const indicatorResult = await pool.query(indicatorQuery, queryParams);
+      indicatorMetrics = indicatorResult.rows;
+      console.log('� Indicator metrics:', indicatorMetrics);
 
-    if (whereConditions.length > 0) {
-      baseQuery += ` WHERE ${whereConditions.join(' AND ')}`;
-    }
-
-    baseQuery += `
-        GROUP BY c.country_id, c.country_name
-        HAVING COUNT(DISTINCT p.product_id) > 0
-      ),
-      product_metrics AS (
+      // 2. Query product metrics with delivery status
+      const productQuery = `
         SELECT 
           p.product_id,
           p.product_name,
@@ -165,80 +112,152 @@ export async function GET(request: Request) {
             (COUNT(CASE WHEN s.status_name = 'Completed' THEN 1 END) * 100.0 / 
              NULLIF(COUNT(t.task_id), 0)), 0
           ) as completion_percentage,
+          
+          -- Tareas vencidas (simplificado)
+          COUNT(CASE 
+            WHEN t.end_date_planned < CURRENT_DATE 
+              AND (s.status_name IS NULL OR s.status_name != 'Completed') 
+            THEN 1 
+          END) as overdue_tasks,
+          
+          -- Adherencia al cronograma: porcentaje de tareas NO vencidas
+          COALESCE(
+            (COUNT(CASE 
+              WHEN t.end_date_planned >= CURRENT_DATE 
+                OR s.status_name = 'Completed'
+              THEN 1 
+            END) * 100.0 / NULLIF(COUNT(t.task_id), 0)), 0
+          ) as schedule_adherence_percentage,
           CASE 
-            WHEN COUNT(CASE WHEN t.end_date_planned < NOW() AND s.status_name != 'Completed' THEN 1 END) > 0 
+            WHEN COUNT(CASE 
+              WHEN t.end_date_planned < CURRENT_DATE 
+                AND (s.status_name IS NULL OR s.status_name != 'Completed') 
+              THEN 1 
+            END) > 0 
             THEN 'Retrasado'
-            WHEN COUNT(CASE WHEN t.end_date_planned::date = CURRENT_DATE AND s.status_name != 'Completed' THEN 1 END) > 0 
+            WHEN COUNT(CASE 
+              WHEN DATE(t.end_date_planned) = CURRENT_DATE 
+                AND (s.status_name IS NULL OR s.status_name != 'Completed') 
+              THEN 1 
+            END) > 0 
             THEN 'Vence Hoy'
             ELSE 'En Tiempo'
           END as delivery_status
         FROM products p
+        INNER JOIN product_indicators pi ON p.product_id = pi.product_id
+        INNER JOIN indicators i ON pi.indicator_id = i.indicator_id
         LEFT JOIN countries c ON p.country_id = c.country_id
-        LEFT JOIN product_indicators pi ON p.product_id = pi.product_id
-        LEFT JOIN indicators i ON pi.indicator_id = i.indicator_id
         LEFT JOIN tasks t ON p.product_id = t.product_id
         LEFT JOIN status s ON t.status_id = s.status_id
-    `;
-
-    if (whereConditions.length > 0) {
-      baseQuery += ` WHERE ${whereConditions.join(' AND ')}`;
-    }
-
-    baseQuery += `
+        WHERE ${whereConditions.length > 0 ? whereConditions.join(' AND ') : '1=1'}
         GROUP BY p.product_id, p.product_name, p.country_id, c.country_name, i.indicator_code, i.indicator_name
         HAVING COUNT(t.task_id) > 0
-      )
-      SELECT 
-        'indicator_metrics' as data_type,
-        json_agg(im.*) as data
-      FROM indicator_metrics im
-      UNION ALL
-      SELECT 
-        'country_metrics' as data_type,
-        json_agg(cm.*) as data
-      FROM country_metrics cm
-      UNION ALL
-      SELECT 
-        'product_metrics' as data_type,
-        json_agg(pm.*) as data
-      FROM product_metrics pm
-    `;
+      `;
+      
+      const productResult = await pool.query(productQuery, queryParams);
+      productMetrics = productResult.rows;
+      console.log('� Product metrics:', productMetrics);
 
-    console.log('🔍 Final query:', baseQuery);
-    console.log('🔍 Query params:', queryParams);
+      // 3. Query country metrics
+      const countryQuery = `
+        SELECT 
+          c.country_name,
+          COUNT(DISTINCT p.product_id) as total_products,
+          COUNT(DISTINCT t.task_id) as total_tasks,
+          COUNT(DISTINCT CASE WHEN s.status_name = 'Completed' THEN t.task_id END) as completed_tasks,
+          COALESCE(
+            (COUNT(DISTINCT CASE WHEN s.status_name = 'Completed' THEN t.task_id END) * 100.0 / 
+             NULLIF(COUNT(DISTINCT t.task_id), 0)), 0
+          ) as country_completion_rate,
+          COUNT(DISTINCT CASE 
+            WHEN t.end_date_planned < CURRENT_DATE AND s.status_name != 'Completed' 
+            THEN p.product_id 
+          END) as overdue_products
+        FROM countries c
+        INNER JOIN products p ON c.country_id = p.country_id
+        INNER JOIN product_indicators pi ON p.product_id = pi.product_id
+        INNER JOIN indicators i ON pi.indicator_id = i.indicator_id
+        LEFT JOIN tasks t ON p.product_id = t.product_id
+        LEFT JOIN status s ON t.status_id = s.status_id
+        WHERE ${whereConditions.length > 0 ? whereConditions.join(' AND ') : '1=1'}
+        GROUP BY c.country_id, c.country_name
+        HAVING COUNT(DISTINCT p.product_id) > 0
+      `;
+      
+      const countryResult = await pool.query(countryQuery, queryParams);
+      countryMetrics = countryResult.rows;
+      console.log('🌍 Country metrics:', countryMetrics);
 
-    const result = await pool.query(baseQuery, queryParams);
-    console.log('📊 Raw query result:', result.rows);
+      // 4. Query task status distribution
+      const taskStatusQuery = `
+        SELECT 
+          COALESCE(s.status_name, 'Sin Estado') as status_name,
+          COUNT(t.task_id) as task_count
+        FROM tasks t
+        INNER JOIN products p ON t.product_id = p.product_id
+        INNER JOIN product_indicators pi ON p.product_id = pi.product_id
+        INNER JOIN indicators i ON pi.indicator_id = i.indicator_id
+        LEFT JOIN status s ON t.status_id = s.status_id
+        WHERE ${whereConditions.length > 0 ? whereConditions.join(' AND ') : '1=1'}
+        GROUP BY s.status_name
+        ORDER BY task_count DESC
+      `;
+      
+      const taskStatusResult = await pool.query(taskStatusQuery, queryParams);
+      taskStatusMetrics = taskStatusResult.rows;
+      console.log('📋 Task status metrics:', taskStatusMetrics);
 
-    // Organizar los datos por tipo
-    const responseData: {
-      indicatorMetrics: IndicatorMetric[];
-      countryMetrics: CountryMetric[];
-      productMetrics: ProductMetric[];
-    } = {
-      indicatorMetrics: [],
-      countryMetrics: [],
-      productMetrics: []
+    } catch (queryError) {
+      console.error('Error in individual queries:', queryError);
+    }
+
+    // 🔧 FIX: Convert string numbers to actual numbers
+    const convertedIndicatorMetrics = indicatorMetrics.map(metric => ({
+      ...metric,
+      products_using: parseInt(metric.products_using) || 0,
+      countries_covered: parseInt(metric.countries_covered) || 0,
+      total_tasks: parseInt(metric.total_tasks) || 0,
+      completed_tasks: parseInt(metric.completed_tasks) || 0,
+      completion_percentage: parseFloat(metric.completion_percentage) || 0,
+      working_groups_using: parseInt(metric.working_groups_using) || 0
+    }));
+
+    const convertedCountryMetrics = countryMetrics.map(metric => ({
+      ...metric,
+      total_products: parseInt(metric.total_products) || 0,
+      total_tasks: parseInt(metric.total_tasks) || 0,
+      completed_tasks: parseInt(metric.completed_tasks) || 0,
+      country_completion_rate: parseFloat(metric.country_completion_rate) || 0,
+      overdue_products: parseInt(metric.overdue_products) || 0
+    }));
+
+    const convertedProductMetrics = productMetrics.map(metric => ({
+      ...metric,
+      total_tasks: parseInt(metric.total_tasks) || 0,
+      completed_tasks: parseInt(metric.completed_tasks) || 0,
+      completion_percentage: parseFloat(metric.completion_percentage) || 0,
+      overdue_tasks: parseInt(metric.overdue_tasks) || 0,
+      schedule_adherence_percentage: parseFloat(metric.schedule_adherence_percentage) || 0
+    }));
+
+    const convertedTaskStatusMetrics = taskStatusMetrics.map(metric => ({
+      ...metric,
+      task_count: parseInt(metric.task_count) || 0
+    }));
+
+    // Return the organized data with converted numbers
+    const responseData = {
+      indicatorMetrics: convertedIndicatorMetrics,
+      countryMetrics: convertedCountryMetrics,
+      productMetrics: convertedProductMetrics,
+      taskStatusMetrics: convertedTaskStatusMetrics
     };
-
-    result.rows.forEach(row => {
-      switch (row.data_type) {
-        case 'indicator_metrics':
-          responseData.indicatorMetrics = row.data || [];
-          break;
-        case 'country_metrics':
-          responseData.countryMetrics = row.data || [];
-          break;
-        case 'product_metrics':
-          responseData.productMetrics = row.data || [];
-          break;
-      }
-    });
 
     console.log(`Fetched filtered indicator analytics: 
       - Indicators: ${responseData.indicatorMetrics.length}
       - Countries: ${responseData.countryMetrics.length} 
       - Products: ${responseData.productMetrics.length}
+      - Task Status: ${responseData.taskStatusMetrics.length}
       - Filters: output=${outputFilter}, indicator=${indicatorFilter}`);
 
     return NextResponse.json(responseData);
@@ -249,7 +268,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       indicatorMetrics: [],
       countryMetrics: [],
-      productMetrics: []
+      productMetrics: [],
+      taskStatusMetrics: []
     });
   }
 }
