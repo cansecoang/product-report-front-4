@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar"
 import { DynamicPageHeader } from "@/components/dynamic-page-header"
@@ -9,17 +8,34 @@ import {
 } from "@/components/ui/sidebar"
 import { Suspense } from "react";
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
-});
+// Import fonts conditionally to avoid build failures in restricted environments
+interface FontConfig {
+  variable: string;
+  className?: string;
+}
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+let montserrat: FontConfig = { variable: "--font-montserrat" };
+let geistMono: FontConfig = { variable: "--font-geist-mono" };
+
+try {
+  // Only load Google Fonts if network access is available
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Montserrat, Geist_Mono } = require("next/font/google");
+  
+  montserrat = Montserrat({
+    variable: "--font-montserrat",
+    subsets: ["latin"],
+    display: "swap",
+    weight: ["300", "400", "500", "600", "700"],
+  });
+
+  geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+  });
+} catch {
+  console.warn("Google Fonts not available, using system fonts");
+}
 
 export const metadata: Metadata = {
   title: "BioFincas - Dashboard de Biodiversidad",
