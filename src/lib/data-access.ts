@@ -14,8 +14,17 @@ export interface Product {
   objective?: string;
 }
 
+// Check if we're in build time without database access
+const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL && !process.env.DB_HOST;
+
 // Función para obtener todos los work packages desde tu tabla real
 export const getWorkPackages = async (): Promise<WorkPackage[]> => {
+  // Durante build time sin DB, devolver array vacío
+  if (isBuildTime) {
+    console.log('⚠️ Build time detected without DB config, returning empty work packages');
+    return [];
+  }
+
   try {
     const result = await pool.query(`
       SELECT workpackage_id, workpackage_name, workpackage_description 
@@ -32,12 +41,23 @@ export const getWorkPackages = async (): Promise<WorkPackage[]> => {
     }));
   } catch (error) {
     console.error('Error fetching work packages:', error);
+    // During build, return empty array instead of throwing
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ Returning empty work packages due to DB connection error during build');
+      return [];
+    }
     throw new Error('Failed to fetch work packages');
   }
 };
 
 // Función para obtener products por work package desde tu tabla real
 export const getProductsByWorkPackage = async (workPackageId: string): Promise<Product[]> => {
+  // Durante build time sin DB, devolver array vacío
+  if (isBuildTime) {
+    console.log('⚠️ Build time detected without DB config, returning empty products');
+    return [];
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -60,12 +80,23 @@ export const getProductsByWorkPackage = async (workPackageId: string): Promise<P
     }));
   } catch (error) {
     console.error('Error fetching products:', error);
+    // During build, return empty array instead of throwing
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ Returning empty products due to DB connection error during build');
+      return [];
+    }
     throw new Error('Failed to fetch products');
   }
 };
 
 // Función para obtener todos los products
 export const getAllProducts = async (): Promise<Product[]> => {
+  // Durante build time sin DB, devolver array vacío
+  if (isBuildTime) {
+    console.log('⚠️ Build time detected without DB config, returning empty products');
+    return [];
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -87,6 +118,11 @@ export const getAllProducts = async (): Promise<Product[]> => {
     }));
   } catch (error) {
     console.error('Error fetching all products:', error);
+    // During build, return empty array instead of throwing
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ Returning empty products due to DB connection error during build');
+      return [];
+    }
     throw new Error('Failed to fetch products');
   }
 };
