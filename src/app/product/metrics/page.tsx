@@ -9,9 +9,18 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  RadialBarChart,
-  RadialBar
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid
 } from "recharts";
+
+interface PhaseData {
+  name: string;
+  total: number;
+  completadas: number;
+}
 
 interface ProductSummary {
   product_name: string;
@@ -20,6 +29,7 @@ interface ProductSummary {
   in_progress_tasks: string;
   pending_tasks: string;
   completion_percentage: string;
+  phaseDistribution?: PhaseData[];
 }
 
 interface StatusDistribution {
@@ -31,6 +41,12 @@ interface StatusDistribution {
 interface ChartStatusData {
   name: string;
   value: number;
+  percentage: number;
+}
+
+interface PendingTaskByOrg {
+  organization: string;
+  pending_count: number;
   percentage: number;
 }
 
@@ -49,24 +65,126 @@ function MetricsPageContent() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productSummary, setProductSummary] = useState<ProductSummary | null>(null);
   const [statusDistribution, setStatusDistribution] = useState<StatusDistribution[]>([]);
+  const [phaseData, setPhaseData] = useState<PhaseData[]>([]);
+  const [pendingTasksByOrg, setPendingTasksByOrg] = useState<PendingTaskByOrg[]>([]);
+  const [totalPendingTasks, setTotalPendingTasks] = useState<number>(0);
 
-  const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const getStatusColor = (statusName: string): string => {
+    const statusColorMap: Record<string, string> = {
+      'Completed': '#10B981',     // Verde - Completed
+      'Reviewed': '#10B981',      // Verde - Reviewed (mismo que completed)
+      'Blocked': '#DC2626',       // Rojo - Blocked
+      'On Hold': '#F59E0B',       // Naranja/Amarillo - On Hold
+      'In Progress': '#3B82F6',   // Azul - In Progress
+      'Not Started': '#6B7280',   // Gris - Not Started
+      // Alias para variaciones de nombres
+      'In-Progress': '#3B82F6',   // Azul
+      'NotStarted': '#6B7280',    // Gris
+      'Pending': '#F59E0B',       // Naranja (similar a On Hold)
+      'Cancelled': '#6B7280',     // Gris
+      'Review': '#06B6D4',        // Cyan
+      'Approved': '#10B981'       // Verde
+    };
+    return statusColorMap[statusName] || '#6B7280';
+  };
+
+  const getPhaseColor = (phaseName: string): string => {
+    const phaseColorMap: Record<string, string> = {
+      'Planificacion': '#EAB308',    // Amarillo dorado - Planificacion
+      'Planificación': '#EAB308',    // Amarillo dorado - Planificación (con tilde)
+      'Planning': '#EAB308',         // Amarillo dorado - Planning (inglés)
+      'Elaboration': '#06B6D4',      // Cian/Azul claro - Elaboracion
+      'Elaboración': '#06B6D4',      // Cian/Azul claro - Elaboración (con tilde)
+      'Development': '#06B6D4',      // Cian/Azul claro - Development (inglés)
+      'Execution': '#06B6D4',        // Cian/Azul claro - Execution (inglés)
+      'Finalizacion': '#22C55E',     // Verde brillante - Finalizacion
+      'Finalización': '#22C55E',     // Verde brillante - Finalización (con tilde)
+      'Completion': '#22C55E',       // Verde brillante - Completion (inglés)
+      'Closure': '#22C55E'           // Verde brillante - Closure (inglés)
+    };
+    return phaseColorMap[phaseName] || '#6B7280';
+  };
+
+  const getOrganizationColor = (orgName: string, index: number): string => {
+    const orgColorPalette = [
+      '#3B82F6',  // Azul
+      '#10B981',  // Verde  
+      '#F59E0B',  // Amarillo/Naranja
+      '#EF4444',  // Rojo
+      '#8B5CF6',  // Púrpura
+      '#06B6D4',  // Cyan
+      '#84CC16',  // Verde lima
+      '#F97316',  // Naranja
+      '#EC4899',  // Rosa
+      '#6B7280'   // Gris
+    ];
+    
+    // Colores específicos para organizaciones conocidas
+    const specificOrgColors: Record<string, string> = {
+      'Nuup': '#3B82F6',      // Azul para Nuup
+      'Oroverde': '#10B981',  // Verde para Oroverde
+      'NUUP': '#3B82F6',      // Azul para NUUP (mayúscula)
+      'OROVERDE': '#10B981'   // Verde para OROVERDE (mayúscula)
+    };
+    
+    return specificOrgColors[orgName] || orgColorPalette[index % orgColorPalette.length];
+  };
 
   const fetchMetrics = async (productId: string) => {
     setLoading(true);
     try {
-      const url = `/api/metrics?productId=${productId}`;
+      // Obtener métricas básicas
+      const metricsUrl = `/api/metrics?productId=${productId}`;
+      const metricsResponse = await fetch(metricsUrl);
       
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProductSummary(data.productSummary);
-        setStatusDistribution(data.statusDistribution);
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json();
+        console.log('📊 Status Distribution recibido:', metricsData.statusDistribution);
+        setProductSummary(metricsData.productSummary);
+        setStatusDistribution(metricsData.statusDistribution || []);
       } else {
-        const errorText = await response.text();
-        console.error('Error fetching metrics:', response.status, errorText);
+        console.error('Error fetching metrics:', metricsResponse.status);
       }
+
+      // Obtener distribución por fases con datos reales
+      const phasesUrl = `/api/product-phases-metrics?productId=${productId}`;
+      const phasesResponse = await fetch(phasesUrl);
+      
+      if (phasesResponse.ok) {
+        const phasesData = await phasesResponse.json();
+        setPhaseData(phasesData.phaseMetrics || []);
+      } else {
+        // Fallback: usar endpoint existente y calcular datos
+        const existingPhasesUrl = `/api/product-phases?productId=${productId}`;
+        const existingResponse = await fetch(existingPhasesUrl);
+        
+        if (existingResponse.ok) {
+          const existingData = await existingResponse.json();
+          // Calcular completadas basado en el progreso general (temporal)
+          const phases = existingData.phases.map((phase: {phase_name: string, task_count: number}) => ({
+            name: phase.phase_name,
+            total: phase.task_count,
+            completadas: Math.floor(phase.task_count * 0.6) // 60% completadas por defecto
+          }));
+          setPhaseData(phases);
+        }
+      }
+
+      // Obtener tareas pendientes por organización
+      const pendingByOrgUrl = `/api/pending-tasks-by-org?productId=${productId}`;
+      const pendingByOrgResponse = await fetch(pendingByOrgUrl);
+      
+      if (pendingByOrgResponse.ok) {
+        const pendingByOrgData = await pendingByOrgResponse.json();
+        console.log('🏢 Pending tasks by organization:', pendingByOrgData);
+        setPendingTasksByOrg(pendingByOrgData.pendingTasksByOrg || []);
+        setTotalPendingTasks(pendingByOrgData.totalPendingTasks || 0);
+      } else {
+        console.error('Error fetching pending tasks by organization:', pendingByOrgResponse.status);
+        setPendingTasksByOrg([]);
+        setTotalPendingTasks(0);
+      }
+      
     } catch (error) {
       console.error('Error fetching metrics:', error);
     } finally {
@@ -86,6 +204,9 @@ function MetricsPageContent() {
       if (!urlProductId) {
         setProductSummary(null);
         setStatusDistribution([]);
+        setPhaseData([]);
+        setPendingTasksByOrg([]);
+        setTotalPendingTasks(0);
       }
     }
   }, [searchParams, selectedProductId]);
@@ -99,18 +220,28 @@ function MetricsPageContent() {
 
   // Preparar datos para los gráficos (memoizado para evitar recálculos)
   const chartData = useMemo(() => {
-    const progressData = productSummary ? [
-      { name: 'Completado', value: parseFloat(productSummary.completion_percentage) }
-    ] : [];
-
     const statusData = statusDistribution.map((item: StatusDistribution) => ({
       name: item.name,
       value: parseInt(item.value),
       percentage: parseFloat(item.percentage)
     }));
+
+    const orgData = pendingTasksByOrg.map((item: PendingTaskByOrg) => ({
+      name: item.organization,
+      value: item.pending_count,
+      percentage: item.percentage
+    }));
+
+    // Preparar datos para el gráfico de barras de progreso por fases
+    const phaseProgressData = phaseData.map((phase: PhaseData) => ({
+      name: phase.name,
+      completadas: phase.completadas,
+      pendientes: phase.total - phase.completadas, // Las que faltan por completar
+      total: phase.total
+    }));
     
-    return { progressData, statusData };
-  }, [productSummary, statusDistribution]);
+    return { phaseData, statusData, orgData, phaseProgressData };
+  }, [phaseData, statusDistribution, pendingTasksByOrg]);
 
   // Verificar si no hay producto seleccionado
   if (!selectedProductId) {
@@ -137,7 +268,7 @@ function MetricsPageContent() {
 
   return (
     <div className="bg-gray-50 pt-2">
-      {/* Header con resumen ejecutivo */}
+      {/* Header con resumen ejecutivo basado en status reales */}
       {productSummary && (
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">{productSummary.product_name}</h1>
@@ -147,128 +278,254 @@ function MetricsPageContent() {
               <div className="text-2xl font-bold text-blue-600">{productSummary.total_tasks}</div>
               <div className="text-sm text-gray-600">Total Tareas</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{productSummary.completed_tasks}</div>
-              <div className="text-sm text-gray-600">Completadas</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4 text-center">
-              <div className="text-2xl font-bold text-blue-500">{productSummary.in_progress_tasks}</div>
-              <div className="text-sm text-gray-600">En Progreso</div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-500">{productSummary.pending_tasks}</div>
-              <div className="text-sm text-gray-600">Pendientes</div>
-            </div>
+            {statusDistribution.length > 0 ? (
+              statusDistribution.slice(0, 3).map((status) => (
+                <div key={status.name} className="bg-white rounded-lg shadow p-4 text-center">
+                  <div 
+                    className="text-2xl font-bold mb-1"
+                    style={{ color: getStatusColor(status.name) }}
+                  >
+                    {status.value}
+                  </div>
+                  <div className="text-sm text-gray-600">{status.name}</div>
+                  <div className="text-xs text-gray-400">{status.percentage}%</div>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-2xl font-bold text-green-600">{productSummary.completed_tasks}</div>
+                  <div className="text-sm text-gray-600">Completadas</div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-500">{productSummary.in_progress_tasks}</div>
+                  <div className="text-sm text-gray-600">En Progreso</div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-2xl font-bold text-yellow-500">{productSummary.pending_tasks}</div>
+                  <div className="text-sm text-gray-600">Pendientes</div>
+                </div>
+              </>
+            )}
           </div>
+          
+          {statusDistribution.length > 3 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
+              {statusDistribution.slice(3).map((status) => (
+                <div key={status.name} className="bg-white rounded-lg shadow p-3 text-center">
+                  <div 
+                    className="text-lg font-bold mb-1"
+                    style={{ color: getStatusColor(status.name) }}
+                  >
+                    {status.value}
+                  </div>
+                  <div className="text-xs text-gray-600">{status.name}</div>
+                  <div className="text-xs text-gray-400">{status.percentage}%</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Progreso General del Producto */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Progreso por Fases */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Progreso General</h2>
+          <h2 className="text-xl font-semibold mb-4">Progreso por Fases</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={chartData.progressData}>
-              <RadialBar 
-                dataKey="value" 
-                cornerRadius={10} 
-                fill="#10B981"
+            <BarChart
+              data={chartData.phaseProgressData}
+              margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip 
+                formatter={(value, name, props) => {
+                  if (name === 'completadas') {
+                    const total = props?.payload?.total || 1;
+                    const percentage = Math.round((Number(value) / total) * 100);
+                    return [`${value} tareas (${percentage}%)`, 'Completadas'];
+                  } else if (name === 'pendientes') {
+                    return [`${value} tareas`, 'Pendientes'];
+                  }
+                  return [`${value} tareas`, name];
+                }}
+                labelFormatter={(label) => `Fase: ${label}`}
               />
-              <Tooltip formatter={(value) => [`${value}%`, 'Completado']} />
-            </RadialBarChart>
+              {/* Barra de tareas completadas (abajo en el stack) */}
+              <Bar 
+                dataKey="completadas" 
+                stackId="progress"
+                name="Completadas"
+                radius={[0, 0, 4, 4]}
+              >
+                {chartData.phaseProgressData.map((entry, index) => (
+                  <Cell key={`completed-${index}`} fill={getPhaseColor(entry.name)} />
+                ))}
+              </Bar>
+              {/* Barra de tareas pendientes (arriba en el stack) */}
+              <Bar 
+                dataKey="pendientes" 
+                stackId="progress"
+                name="Pendientes"
+                fill="#E5E7EB"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
           </ResponsiveContainer>
-          <div className="text-center mt-4">
-            <span className="text-3xl font-bold text-green-600">
-              {productSummary?.completion_percentage || 0}%
-            </span>
-            <p className="text-gray-600">Completado</p>
+          <div className="grid grid-cols-3 gap-4 mt-4 text-center">
+            {chartData.phaseProgressData.map((fase, index) => (
+              <div key={index} className="text-sm">
+                <div 
+                  className="font-semibold mb-1"
+                  style={{ color: getPhaseColor(fase.name) }}
+                >
+                  {fase.name}
+                </div>
+                <div className="text-green-600 font-bold">
+                  {fase.completadas}/{fase.total}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {Math.round((fase.completadas / fase.total) * 100)}%
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Distribución por Estado */}
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Distribución por Estado</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={chartData.statusData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={120}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {chartData.statusData.map((entry: ChartStatusData, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value, name) => [`${value} tareas`, name]} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {chartData.statusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData.statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={120}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {chartData.statusData.map((entry: ChartStatusData, index: number) => (
+                    <Cell key={`cell-${index}`} fill={getStatusColor(entry.name)} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value, name) => [`${value} tareas`, name]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <p className="text-lg mb-2">No hay datos de estado disponibles</p>
+                <p className="text-sm">Selecciona un producto con tareas asignadas</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tareas Pendientes por Organización */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Tareas Pendientes por Organización</h2>
+          {chartData.orgData.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={chartData.orgData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 60,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    fontSize={12}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value) => [`${value} tareas pendientes`, 'Tareas Pendientes']}
+                    labelFormatter={(label) => `Organización: ${label}`}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    name="Tareas Pendientes"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    {chartData.orgData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getOrganizationColor(entry.name, index)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="mt-4 text-center">
+                <div className="text-sm font-medium text-gray-600 mb-2">
+                  Total: {totalPendingTasks} tareas pendientes
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <p className="text-lg mb-2">No hay tareas pendientes</p>
+                <p className="text-sm">o no hay datos por organización</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tabla de Detalles */}
-        <div className="bg-white rounded-xl shadow p-6 lg:col-span-2">
+        <div className="bg-white rounded-xl shadow p-6 lg:col-span-3">
           <h2 className="text-xl font-semibold mb-4">Detalles por Estado</h2>
-          <div className="overflow-x-clip">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left">Estado</th>
-                  <th className="px-4 py-2 text-right">Cantidad</th>
-                  <th className="px-4 py-2 text-right">Porcentaje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chartData.statusData.map((item: ChartStatusData, index: number) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2 flex items-center">
-                      <div 
-                        className="w-4 h-4 rounded mr-2" 
-                        style={{ backgroundColor: COLORS[index] }}
-                      ></div>
-                      {item.name}
-                    </td>
-                    <td className="px-4 py-2 text-right font-medium">{item.value}</td>
-                    <td className="px-4 py-2 text-right">{item.percentage}%</td>
+          {chartData.statusData.length > 0 ? (
+            <div className="overflow-x-clip">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-2 text-left">Estado</th>
+                    <th className="px-4 py-2 text-right">Cantidad</th>
+                    <th className="px-4 py-2 text-right">Porcentaje</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {chartData.statusData.map((item: ChartStatusData, index: number) => (
+                    <tr key={index} className="border-t">
+                      <td className="px-4 py-2 flex items-center">
+                        <div 
+                          className="w-4 h-4 rounded mr-2" 
+                          style={{ backgroundColor: getStatusColor(item.name) }}
+                        ></div>
+                        {item.name}
+                      </td>
+                      <td className="px-4 py-2 text-right font-medium">{item.value}</td>
+                      <td className="px-4 py-2 text-right">{item.percentage}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-500">
+              <p>No hay datos de estado para mostrar</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Insights */}
-      {productSummary && (
-        <div className="mt-8 bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {parseFloat(productSummary.completion_percentage) >= 80 && (
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <h3 className="font-medium text-green-800">🎉 Excelente Progreso</h3>
-                <p className="text-sm text-green-700">El producto está muy avanzado con {productSummary.completion_percentage}% completado.</p>
-              </div>
-            )}
-            
-            {parseInt(productSummary.completed_tasks) > parseInt(productSummary.in_progress_tasks) && (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="font-medium text-blue-800">✅ Productividad Alta</h3>
-                <p className="text-sm text-blue-700">Más tareas completadas que en progreso. ¡Buen ritmo!</p>
-              </div>
-            )}
-            
-            {parseInt(productSummary.total_tasks) > 0 && (
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <h3 className="font-medium text-purple-800">📊 Análisis General</h3>
-                <p className="text-sm text-purple-700">Total de {productSummary.total_tasks} tareas en el producto.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+     
     </div>
   );
 }

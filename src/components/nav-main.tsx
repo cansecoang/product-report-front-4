@@ -96,17 +96,32 @@ export function NavMain({
               <SidebarMenuItem>
                 {hasSubItems ? (
                   <>
-                    <CollapsibleTrigger asChild>
+                    {/* Botón principal clickeable */}
+                    <div className="flex">
                       <SidebarMenuButton 
+                        asChild
                         tooltip={item.title}
                         isActive={isItemActive}
-                        onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
+                        className="flex-1"
                       >
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        <Link href={item.url} onClick={handleLinkClick}>
+                          {item.icon && <item.icon />}
+                          <span>{item.title}</span>
+                        </Link>
                       </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                      
+                      {/* Botón para expandir/colapsar */}
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton 
+                          tooltip={`Expandir ${item.title}`}
+                          onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
+                          className="w-8 px-2"
+                        >
+                          <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                    </div>
+                    
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (

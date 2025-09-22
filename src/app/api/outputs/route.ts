@@ -17,8 +17,8 @@ export async function GET() {
       
       return NextResponse.json({
         outputs: result.rows.map(row => ({
-          value: row.output_number.toString(),
-          label: `Output ${row.output_number}`
+          outputNumber: row.output_number.toString(),
+          name: `Output ${row.output_number}`
         }))
       });
       

@@ -108,13 +108,52 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
 
   const handleWorkPackageChange = (workPackageId: string | null) => {
     console.log('Work Package selected:', workPackageId);
+    
+    const params = new URLSearchParams(searchParams);
+    
+    if (workPackageId) {
+      // 🎯 URL-FIRST: Actualizar workPackageId en URL
+      params.set('workPackageId', workPackageId);
+      // Reset output y product cuando cambia work package
+      params.delete('outputNumber');
+      params.delete('productId');
+    } else {
+      // Remover todos los parámetros relacionados
+      params.delete('workPackageId');
+      params.delete('outputNumber');
+      params.delete('productId');
+    }
+    
+    // Actualizar URL
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(newUrl);
+    
     // Reset product selection when work package changes
     setSelectedProduct(null);
+  };
+
+  const handleOutputChange = (outputNumber: string | null) => {
+    console.log('Output selected:', outputNumber);
     
-    // Si hay un producto seleccionado en la URL, removerlo
-    if (searchParams.get('productId')) {
-      router.push(pathname);
+    const params = new URLSearchParams(searchParams);
+    
+    if (outputNumber) {
+      // 🎯 URL-FIRST: Actualizar outputNumber en URL
+      params.set('outputNumber', outputNumber);
+      // Reset product cuando cambia output
+      params.delete('productId');
+    } else {
+      // Remover output y product
+      params.delete('outputNumber');
+      params.delete('productId');
     }
+    
+    // Actualizar URL
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(newUrl);
+    
+    // Reset product selection when output changes
+    setSelectedProduct(null);
   };
 
   const handleProductChange = (productId: string | null) => {
@@ -302,49 +341,22 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
   return (
     <>
       {/* Product-specific toolbar below the main header */}
-      <div data-component="ProductToolbar" className="bg-background/95 backdrop-blur-sm border-b px-4 py-3 shadow-sm">
-        <div className="flex items-center justify-between w-full">
-          {/* Lado izquierdo: Dropdowns solamente */}
-          <div className="flex items-center gap-4">
-            <ProductSelectors 
-              initialWorkPackages={initialWorkPackages}
-              onWorkPackageChange={handleWorkPackageChange}
-              onProductChange={handleProductChange}
-              refreshTrigger={refreshTrigger}
-            />
-          </div>
+      <div data-component="ProductToolbar" className="bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        {/* Main toolbar row */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between w-full">
+            {/* Lado izquierdo: Dropdowns solamente */}
+            <div className="flex items-center gap-4">
+              <ProductSelectors 
+                initialWorkPackages={initialWorkPackages}
+                onWorkPackageChange={handleWorkPackageChange}
+                onOutputChange={handleOutputChange}
+                onProductChange={handleProductChange}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
 
-          {/* Lado derecho: Delivery Date + Country + Add Product + Add Task */}
-          <div className="flex items-center gap-6">
-            {selectedProduct && (
-              <>
-                {/* Delivery Date */}
-                <div className="text-sm font-medium text-foreground">
-                  {formatDate(selectedProduct.deliveryDate)}
-                </div>
-                
-                {/* Country Name */}
-                <div className="text-sm font-medium text-foreground flex items-center gap-1">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="14" 
-                    height="14" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  {selectedProduct.country || 'No Country'}
-                </div>
-              </>
-            )}
-            
-            {/* Action Buttons */}
+            {/* Lado derecho: Action Buttons solamente */}
             <div className="flex items-center gap-2">
               {/* Botón Add Product */}
               <Button 
@@ -366,20 +378,100 @@ export function ProductToolbar({ initialWorkPackages }: ProductToolbarProps) {
                 + Add Task
               </Button>
             </div>
+          </div>
+        </div>
 
-            {/* View Details Button */}
-            {selectedProduct && (
+        {/* Product Details Bar - Solo se muestra cuando hay un producto seleccionado */}
+        {selectedProduct && (
+          <div className="border-t bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/30 dark:to-green-950/30 px-4 py-3 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between w-full">
+              {/* Lado izquierdo: Información del producto */}
+              <div className="flex items-center gap-6">
+                {/* Delivery Date */}
+                <div className="flex items-center gap-2">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-blue-600"
+                  >
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                    <line x1="16" x2="16" y1="2" y2="6"/>
+                    <line x1="8" x2="8" y1="2" y2="6"/>
+                    <line x1="3" x2="21" y1="10" y2="10"/>
+                  </svg>
+                  <div className="text-sm">
+                    <span className="text-xs text-muted-foreground block">Delivery Date</span>
+                    <span className="font-medium text-foreground">{formatDate(selectedProduct.deliveryDate)}</span>
+                  </div>
+                </div>
+                
+                {/* Country Name */}
+                <div className="flex items-center gap-2">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-green-600"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <div className="text-sm">
+                    <span className="text-xs text-muted-foreground block">Country</span>
+                    <span className="font-medium text-foreground">{selectedProduct.country || 'No Country'}</span>
+                  </div>
+                </div>
+
+                {/* Product Owner */}
+                <div className="flex items-center gap-2">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-purple-600"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="m22 11-3-3m0 0-3 3m3-3v8"/>
+                  </svg>
+                  <div className="text-sm">
+                    <span className="text-xs text-muted-foreground block">Product Owner</span>
+                    <span className="font-medium text-foreground">{selectedProduct.primaryOrganization || 'No Owner'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lado derecho: View Details Button */}
               <Button 
                 onClick={() => setIsModalOpen(true)}
                 variant="outline"
-                className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-sm px-3 py-1.5"
+                className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-sm px-4 py-2"
                 size="sm"
               >
-                Details
+                View Details
               </Button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}

@@ -64,6 +64,41 @@ export const getProductsByWorkPackage = async (workPackageId: string): Promise<P
   }
 };
 
+// Función SIMPLE para obtener productos por work package y output
+export const getProductsByWorkPackageAndOutput = async (workPackageId: string, outputNumber: string): Promise<Product[]> => {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`🔍 [${timestamp}] NUEVA FUNCIÓN - Buscando productos con WP: ${workPackageId} y Output: ${outputNumber}`);
+    
+    const result = await pool.query(`
+      SELECT 
+        product_id, 
+        product_name, 
+        product_objective,
+        workpackage_id,
+        product_output
+      FROM products p
+      WHERE p.workpackage_id = $1 
+      AND p.product_output = $2
+      ORDER BY p.product_name
+    `, [workPackageId, outputNumber]);
+    
+    console.log(`✅ [${timestamp}] Productos encontrados: ${result.rows.length}`, 
+                 result.rows.map(r => `${r.product_name} (WP:${r.workpackage_id}, Output:${r.product_output})`));
+    
+    return result.rows.map((row: { product_id: number; product_name: string; workpackage_id: number; product_objective: string; product_output: number }) => ({
+      id: row.product_id.toString(),
+      name: row.product_name,
+      workPackageId: row.workpackage_id.toString(),
+      outputNumber: row.product_output.toString(), // 🎯 Directamente desde product_output
+      objective: row.product_objective
+    }));
+  } catch (error) {
+    console.error('Error fetching products by workpackage and output:', error);
+    throw new Error('Failed to fetch products by workpackage and output');
+  }
+};
+
 // Función para obtener todos los products
 export const getAllProducts = async (): Promise<Product[]> => {
   try {
