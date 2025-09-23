@@ -11,40 +11,57 @@ console.log('🔧 DB Configuration:', {
   DB_PASSWORD: process.env.DB_PASSWORD ? 'SET' : 'NOT_SET'
 });
 
-// Configuración flexible: DATABASE_URL, POSTGRES_URL o variables individuales
+// Configuración flexible con manejo de errores mejorado
 let connectionConfig;
 
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('prisma+postgres://')) {
-  // Para Prisma Accelerate, usar POSTGRES_URL para conexiones directas
+try {
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('prisma+postgres://')) {
+    // Para Prisma Accelerate, usar POSTGRES_URL para conexiones directas
+    if (!process.env.POSTGRES_URL) {
+      throw new Error('POSTGRES_URL not found for Prisma Accelerate configuration');
+    }
+    connectionConfig = {
+      connectionString: process.env.POSTGRES_URL,
+      ssl: { rejectUnauthorized: false },
+    };
+    console.log('🚀 Using Prisma Accelerate with direct PostgreSQL connection');
+  } else if (process.env.DATABASE_URL) {
+    // DATABASE_URL estándar
+    connectionConfig = {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    };
+    console.log('🔗 Using DATABASE_URL connection');
+  } else {
+    // Variables individuales (fallback)
+    connectionConfig = {
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'BioFincas',
+      password: process.env.DB_PASSWORD || '2261',
+      port: parseInt(process.env.DB_PORT || '5434'),
+      // Para bases de datos en la nube, siempre usar SSL
+      ssl: process.env.DB_HOST?.includes('render.com') || 
+           process.env.DB_HOST?.includes('postgres') ||
+           process.env.DB_HOST?.includes('frankfurt-postgres') ||
+           process.env.DB_HOST?.includes('prisma.io')
+        ? { rejectUnauthorized: false } 
+        : false,
+    };
+    console.log('⚙️ Using individual environment variables');
+  }
+} catch (error) {
+  console.error('❌ Database configuration error:', error);
+  // Fallback a configuración local
   connectionConfig = {
-    connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    user: 'postgres',
+    host: 'localhost',
+    database: 'BioFincas',
+    password: '2261',
+    port: 5434,
+    ssl: false,
   };
-  console.log('🚀 Using Prisma Accelerate with direct PostgreSQL connection');
-} else if (process.env.DATABASE_URL) {
-  // DATABASE_URL estándar
-  connectionConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  };
-  console.log('🔗 Using DATABASE_URL connection');
-} else {
-  // Variables individuales (fallback)
-  connectionConfig = {
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'BioFincas',
-    password: process.env.DB_PASSWORD || '2261',
-    port: parseInt(process.env.DB_PORT || '5434'),
-    // Para bases de datos en la nube, siempre usar SSL
-    ssl: process.env.DB_HOST?.includes('render.com') || 
-         process.env.DB_HOST?.includes('postgres') ||
-         process.env.DB_HOST?.includes('frankfurt-postgres') ||
-         process.env.DB_HOST?.includes('prisma.io')
-      ? { rejectUnauthorized: false } 
-      : false,
-  };
-  console.log('⚙️ Using individual environment variables');
+  console.log('🔄 Using fallback local configuration');
 }
 
 const pool = new Pool(connectionConfig);

@@ -13,23 +13,22 @@ export async function GET(request: NextRequest) {
     console.log('🏢 Fetching pending tasks by organization for product:', productId);
 
     // Consultar tareas pendientes por organización
-    // Solo incluir organizaciones que tienen tareas asignadas en este producto
+    // El responsable_id en tareas se refiere directamente al organization_id
     const pendingTasksByOrgQuery = `
       SELECT 
-        o.org_name,
+        COALESCE(o.organization_name, 'Sin organización asignada') as organization_name,
         COUNT(t.task_id)::int as pending_count,
         ROUND(
           (COUNT(t.task_id)::decimal / 
            NULLIF(SUM(COUNT(t.task_id)) OVER (), 0)) * 100, 
           1
         )::float as percentage
-      FROM organizations o
-      INNER JOIN users u ON o.org_id = u.org_id
-      INNER JOIN tasks t ON u.user_id = t.assigned_user_id
+      FROM tasks t
       INNER JOIN status s ON t.status_id = s.status_id
+      LEFT JOIN organizations o ON o.organization_id = t.responsable_id
       WHERE t.product_id = $1
         AND s.status_name NOT IN ('Completed', 'Reviewed')
-      GROUP BY o.org_id, o.org_name
+      GROUP BY o.organization_id, o.organization_name
       HAVING COUNT(t.task_id) > 0
       ORDER BY pending_count DESC
     `;
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     const response = {
       pendingTasksByOrg: pendingTasksByOrg.map(item => ({
-        organization: item.org_name,
+        organization: item.organization_name,
         pending_count: item.pending_count,
         percentage: item.percentage
       })),

@@ -343,7 +343,7 @@ function IndicatorsContent() {
           {data.indicatorMetrics.map((indicator) => (
             <div key={indicator.indicator_id} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {/* Tarjetas de métricas */}
-              <div className="bg-white rounded-lg border p-6">
+              <div key={`products-${indicator.indicator_id}`} className="bg-white rounded-lg border p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Productos Activos</p>
@@ -353,7 +353,7 @@ function IndicatorsContent() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border p-6">
+              <div key={`countries-${indicator.indicator_id}`} className="bg-white rounded-lg border p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Países Cubiertos</p>
@@ -363,7 +363,7 @@ function IndicatorsContent() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border p-6">
+              <div key={`tasks-${indicator.indicator_id}`} className="bg-white rounded-lg border p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Tareas Totales</p>
@@ -373,7 +373,7 @@ function IndicatorsContent() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border p-6">
+              <div key={`progress-${indicator.indicator_id}`} className="bg-white rounded-lg border p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Progreso General</p>

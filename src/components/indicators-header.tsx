@@ -197,12 +197,12 @@ export function IndicatorsHeader({
           {selectedIndicatorInfo && (
             <>
               {/* Output Number */}
-              <div className="text-sm font-medium text-foreground">
+              <div key="output-number" className="text-sm font-medium text-foreground">
                 Output {selectedIndicatorInfo.output_number}
               </div>
               
               {/* Descripción del indicador */}
-              <div className="text-sm text-muted-foreground max-w-[300px] truncate">
+              <div key="indicator-description" className="text-sm text-muted-foreground max-w-[300px] truncate">
                 {selectedIndicatorInfo.indicator_description}
               </div>
             </>

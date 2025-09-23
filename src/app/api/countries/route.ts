@@ -5,8 +5,8 @@ export async function GET() {
   try {
     const query = `
       SELECT 
-        country_id,
-        country_name
+        country_id as id,
+        country_name as name
       FROM countries 
       ORDER BY country_name
     `;

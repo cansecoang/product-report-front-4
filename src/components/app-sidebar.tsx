@@ -15,9 +15,7 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
-import { useAuth } from "@/hooks/useAuth"
 import {
   Sidebar,
   SidebarContent,
@@ -128,15 +126,9 @@ const getData = (searchParams: URLSearchParams) => {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
   const data = getData(searchParams);
 
-  // User data for NavUser component
-  const userData = {
-    name: user?.name || user?.email?.split('@')[0] || 'Usuario',
-    email: user?.email || 'email@ejemplo.com',
-    avatar: '' // No avatar for now
-  };
+  
   
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-300 dark:border-green-800 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50" {...props}>
@@ -147,7 +139,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
-        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   )

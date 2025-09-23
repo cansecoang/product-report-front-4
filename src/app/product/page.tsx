@@ -1,21 +1,24 @@
-'use client';
+import { getWorkPackages } from '@/lib/data-access';
+import { ProductMatrix } from '@/components/product-matrix';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-export default function Page() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/product/list');
-  }, [router]);
-
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-center">
-        <h2 className="text-lg font-medium">Redirigiendo...</h2>
-        <p className="text-muted-foreground">Selecciona un producto del menú superior para continuar.</p>
+export default async function ProductPage() {
+  try {
+    const workPackages = await getWorkPackages();
+    
+    return (
+      <div className="container mx-auto p-6">
+        <ProductMatrix workPackages={workPackages} />
       </div>
-    </div>
-  )
+    );
+  } catch (error) {
+    console.error('Error loading work packages:', error);
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-8">
+          <h2 className="text-lg font-medium text-red-600">Error loading data</h2>
+          <p className="text-muted-foreground">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 }
