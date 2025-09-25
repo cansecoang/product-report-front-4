@@ -328,26 +328,36 @@ function IndicatorDetailModal({
               {indicator.assigned_products.map((product, index) => (
                 <div 
                   key={index} 
-                  className="bg-white border rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer"
+                  className="bg-white border rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
                   onClick={() => onProductClick(product.product_id)}
                 >
-                  <div className="font-medium text-gray-900 mb-1">{product.product_name}</div>
-                  <div className="text-sm text-gray-600 mb-2">ID: {product.product_id}</div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {product.country_name}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">
+                        {product.product_name}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-2">
+                        ID: {product.product_id}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Package2 className="h-3 w-3" />
-                      {product.workpackage_name}
+                    <Eye className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3 w-3 text-gray-500" />
+                      <span className="text-xs text-gray-600">{product.country_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Package2 className="h-3 w-3 text-gray-500" />
+                      <span className="text-xs text-gray-600">{product.workpackage_name}</span>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <Badge variant="outline" className="text-xs">
-                      Click para detalles
-                    </Badge>
-                    <Eye className="h-4 w-4 text-blue-500" />
+                  
+                  <div className="mt-3 pt-2 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">
+                      Ver detalles →
+                    </div>
                   </div>
                 </div>
               ))}
