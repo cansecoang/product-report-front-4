@@ -33,6 +33,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ProductDetailsModal } from "@/components/product-details-modal";
 
 // 🎯 NEW UX-FOCUSED INTERFACES
 interface Output {
@@ -187,7 +188,13 @@ function PerformanceIndicator({ value }: { value: number }) {
 }
 
 // 🎯 UX-FOCUSED COMPONENT: Indicator detail modal
-function IndicatorDetailModal({ indicator }: { indicator: IndicatorPerformance }) {
+function IndicatorDetailModal({ 
+  indicator, 
+  onProductClick 
+}: { 
+  indicator: IndicatorPerformance;
+  onProductClick: (productId: number) => void;
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -319,7 +326,11 @@ function IndicatorDetailModal({ indicator }: { indicator: IndicatorPerformance }
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {indicator.assigned_products.map((product, index) => (
-                <div key={index} className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div 
+                  key={index} 
+                  className="bg-white border rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer"
+                  onClick={() => onProductClick(product.product_id)}
+                >
                   <div className="font-medium text-gray-900 mb-1">{product.product_name}</div>
                   <div className="text-sm text-gray-600 mb-2">ID: {product.product_id}</div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -331,6 +342,12 @@ function IndicatorDetailModal({ indicator }: { indicator: IndicatorPerformance }
                       <Package2 className="h-3 w-3" />
                       {product.workpackage_name}
                     </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">
+                      Click para detalles
+                    </Badge>
+                    <Eye className="h-4 w-4 text-blue-500" />
                   </div>
                 </div>
               ))}
@@ -355,6 +372,16 @@ function IndicatorsContent() {
   const [outputs, setOutputs] = useState<Output[]>([]);
   const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // 🎯 Estado para modal de detalles del producto
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
+
+  // 🎯 Función para manejar click en producto
+  const handleProductClick = (productId: number) => {
+    setSelectedProductId(productId.toString());
+    setShowProductModal(true);
+  };
 
   // 🎯 URL-FIRST: Leer parámetros de la URL
   useEffect(() => {
@@ -604,7 +631,7 @@ function IndicatorsContent() {
             {/* Grid de indicadores */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {outputData.indicators.map((indicator, index) => (
-                <IndicatorDetailModal key={index} indicator={indicator} />
+                <IndicatorDetailModal key={index} indicator={indicator} onProductClick={handleProductClick} />
               ))}
             </div>
 
@@ -632,6 +659,16 @@ function IndicatorsContent() {
           </div>
         )}
       </div>
+
+      {/* Modal de detalles del producto */}
+      <ProductDetailsModal
+        isOpen={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+        productId={selectedProductId}
+      />
     </div>
   );
 }
