@@ -294,25 +294,34 @@ export function ProductDetailsModal({ isOpen, onClose, productId }: ProductDetai
                     {productDetail.responsibles.map((responsible) => (
                       <div 
                         key={responsible.user_id}
-                        className="p-3 bg-gray-50 rounded-lg"
+                        className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-gray-900">
+                        <div className="space-y-3">
+                          {/* Header con nombre y badge principal */}
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-base">
                                 {responsible.user_name} {responsible.user_last_name}
-                              </p>
+                              </h4>
                               {responsible.is_primary && (
-                                <Badge variant="default" className="text-xs">Principal</Badge>
+                                <span className="inline-flex items-center px-2 py-1 mt-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                  ⭐ Principal
+                                </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
-                              <Mail className="h-3 w-3" />
-                              {responsible.user_email}
-                            </p>
-                            <Badge variant="outline" className="text-xs">
+                          </div>
+                          
+                          {/* Email */}
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="break-all">{responsible.user_email}</span>
+                          </div>
+                          
+                          {/* Rol */}
+                          <div>
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-md">
                               {responsible.role_label}
-                            </Badge>
+                            </span>
                           </div>
                         </div>
                       </div>
