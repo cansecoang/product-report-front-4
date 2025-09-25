@@ -7,7 +7,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { Suspense } from "react";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -37,9 +36,7 @@ export default function RootLayout({
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
         <SidebarProvider>
-          <Suspense fallback={<div className="w-64 h-full bg-gray-100 border-r">Cargando...</div>}>
-            <AppSidebar />
-          </Suspense>
+          <AppSidebar />
           <SidebarInset className="flex flex-col h-screen">
             {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
             <DynamicPageHeader />
