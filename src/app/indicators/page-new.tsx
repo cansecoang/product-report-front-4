@@ -2,18 +2,35 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Legend,
+} from "recharts";
 import { 
   Target, 
   TrendingUp,
+  TrendingDown,
   AlertCircle,
   CheckCircle,
   Clock,
   Activity,
+  BarChart3,
   Filter,
   Package2,
-  Eye,
-  BarChart3,
-  MapPin
+  Users,
+  Calendar,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,14 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 // 🎯 NEW UX-FOCUSED INTERFACES
 interface Output {
@@ -45,38 +54,9 @@ interface WorkPackage {
   workpackage_name: string;
 }
 
-interface IndicatorMetric {
-  indicator_code: string;
-  indicator_name: string;
-  total_tasks: number;
-  completed_tasks: number;
-  completion_percentage: number;
-  overdue_tasks: number;
-}
-
-interface TaskStatusMetric {
-  status_name: string;
-  count: number;
-  percentage: number;
-}
-
-interface ApiResponseData {
-  indicatorMetrics: IndicatorMetric[];
-  taskStatusMetrics: TaskStatusMetric[];
-}
-
 interface IndicatorPerformance {
-  indicator_id: number;
   indicator_code: string;
   indicator_name: string;
-  indicator_description: string;
-  assigned_products_count: number;
-  assigned_products: {
-    product_id: number;
-    product_name: string;
-    country_name: string;
-    workpackage_name: string;
-  }[];
   total_tasks: number;
   completed_tasks: number;
   completion_percentage: number;
@@ -98,12 +78,6 @@ interface OutputData {
   };
 }
 
-// 🎯 Helper function to safely convert percentage values
-function safePercentage(value: number | string | undefined): number {
-  if (typeof value === 'number') return value;
-  return parseFloat(value || '0');
-}
-
 export default function IndicatorsPage() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="text-muted-foreground">Cargando indicadores...</div></div>}>
@@ -112,68 +86,16 @@ export default function IndicatorsPage() {
   );
 }
 
-// 🎯 UX-FOCUSED COMPONENT: Circular progress indicator
-function CircularProgress({ value, size = 80 }: { value: number; size?: number }) {
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (value / 100) * circumference;
-
-  const getColor = (val: number) => {
-    if (val >= 90) return '#22c55e'; // green-500
-    if (val >= 75) return '#3b82f6'; // blue-500
-    if (val >= 50) return '#f59e0b'; // amber-500
-    return '#ef4444'; // red-500
-  };
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg
-        className="transform -rotate-90"
-        width={size}
-        height={size}
-      >
-        {/* Background circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#e5e7eb"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        {/* Progress circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={getColor(value)}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          className="transition-all duration-300 ease-in-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold text-gray-900">{value.toFixed(0)}%</span>
-      </div>
-    </div>
-  );
-}
-
 // 🎯 UX-FOCUSED COMPONENT: Performance indicator with semantic colors
-function PerformanceIndicator({ value }: { value: number }) {
-  const getColorAndIcon = (val: number) => {
+function PerformanceIndicator({ value, type }: { value: number; type: 'completion' | 'adherence' }) {
+  const getColorAndIcon = (val: number, indicatorType: string) => {
     if (val >= 90) return { color: 'text-green-600 bg-green-50', icon: CheckCircle, label: 'Excelente' };
     if (val >= 75) return { color: 'text-blue-600 bg-blue-50', icon: TrendingUp, label: 'Bueno' };
     if (val >= 50) return { color: 'text-orange-600 bg-orange-50', icon: Clock, label: 'Atención' };
     return { color: 'text-red-600 bg-red-50', icon: AlertCircle, label: 'Crítico' };
   };
 
-  const { color, icon: Icon, label } = getColorAndIcon(value);
+  const { color, icon: Icon, label } = getColorAndIcon(value, type);
 
   return (
     <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${color}`}>
@@ -186,159 +108,90 @@ function PerformanceIndicator({ value }: { value: number }) {
   );
 }
 
-// 🎯 UX-FOCUSED COMPONENT: Indicator detail modal
-function IndicatorDetailModal({ indicator }: { indicator: IndicatorPerformance }) {
+// 🎯 UX-FOCUSED COMPONENT: Indicator card with clear performance metrics
+function IndicatorCard({ indicator }: { indicator: IndicatorPerformance }) {
+  const progressColor = indicator.completion_percentage >= 75 ? 'bg-green-500' : 
+                       indicator.completion_percentage >= 50 ? 'bg-orange-500' : 'bg-red-500';
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Card className="hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] border-2 hover:border-blue-300">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  {indicator.indicator_code}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1">
-                  {indicator.indicator_name}
-                </CardDescription>
-                <div className="flex items-center gap-2 mt-2">
-                  <Package2 className="h-4 w-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">
-                    {indicator.assigned_products_count} producto{indicator.assigned_products_count !== 1 ? 's' : ''} asignado{indicator.assigned_products_count !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              </div>
-              <Badge 
-                variant={indicator.performance_rating === 'excellent' ? 'default' : 
-                        indicator.performance_rating === 'good' ? 'secondary' :
-                        indicator.performance_rating === 'warning' ? 'outline' : 'destructive'}
-                className="ml-2"
-              >
-                {indicator.performance_rating === 'excellent' ? 'Excelente' :
-                 indicator.performance_rating === 'good' ? 'Bueno' :
-                 indicator.performance_rating === 'warning' ? 'Atención' : 'Crítico'}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Circular Progress */}
-            <div className="flex items-center justify-center mb-4">
-              <CircularProgress value={indicator.completion_percentage} size={100} />
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center">
-                <div className="text-xl font-bold text-gray-900">{indicator.total_tasks}</div>
-                <div className="text-xs text-gray-500">Total Tareas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-green-600">{indicator.completed_tasks}</div>
-                <div className="text-xs text-gray-500">Completadas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-red-600">{indicator.overdue_tasks}</div>
-                <div className="text-xs text-gray-500">Vencidas</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <Target className="h-6 w-6 text-blue-600" />
-            {indicator.indicator_code} - {indicator.indicator_name}
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            {indicator.indicator_description || 'Sin descripción disponible'}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-6 mt-6">
-          {/* Performance Overview */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
-              Resumen de Rendimiento
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <CircularProgress value={indicator.completion_percentage} size={80} />
-                <div className="text-sm font-medium text-gray-700 mt-2">Progreso General</div>
-              </div>
-              <div className="bg-white rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-gray-900">{indicator.total_tasks}</div>
-                <div className="text-sm text-gray-600">Total Tareas</div>
-              </div>
-              <div className="bg-white rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-green-600">{indicator.completed_tasks}</div>
-                <div className="text-sm text-gray-600">Completadas</div>
-              </div>
-              <div className="bg-white rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-red-600">{indicator.overdue_tasks}</div>
-                <div className="text-sm text-gray-600">Vencidas</div>
-              </div>
-            </div>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {indicator.indicator_code}
+            </CardTitle>
+            <CardDescription className="text-sm text-gray-600 mt-1">
+              {indicator.indicator_name}
+            </CardDescription>
           </div>
+          <Badge 
+            variant={indicator.performance_rating === 'excellent' ? 'default' : 
+                    indicator.performance_rating === 'good' ? 'secondary' :
+                    indicator.performance_rating === 'warning' ? 'outline' : 'destructive'}
+            className="ml-2"
+          >
+            {indicator.performance_rating === 'excellent' ? 'Excelente' :
+             indicator.performance_rating === 'good' ? 'Bueno' :
+             indicator.performance_rating === 'warning' ? 'Atención' : 'Crítico'}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-700">Progreso General</span>
+            <span className="text-sm font-bold text-gray-900">{indicator.completion_percentage.toFixed(1)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full ${progressColor}`}
+              style={{ width: `${indicator.completion_percentage}%` }}
+            />
+          </div>
+        </div>
 
-          {/* Status Distribution */}
-          {indicator.status_distribution && indicator.status_distribution.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
-                Distribución de Estados
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {indicator.status_distribution.map((status, index) => (
-                  <div key={index} className="bg-white border rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-700">{status.status_name}</span>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">{status.count}</div>
-                        <div className="text-sm text-gray-500">{safePercentage(status.percentage).toFixed(1)}%</div>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{indicator.total_tasks}</div>
+            <div className="text-xs text-gray-500">Total Tareas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{indicator.completed_tasks}</div>
+            <div className="text-xs text-gray-500">Completadas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">{indicator.overdue_tasks}</div>
+            <div className="text-xs text-gray-500">Vencidas</div>
+          </div>
+        </div>
+
+        {/* Status Distribution */}
+        {indicator.status_distribution && indicator.status_distribution.length > 0 && (
+          <div className="mt-3">
+            <div className="text-sm font-medium text-gray-700 mb-2">Distribución de Estados</div>
+            <div className="space-y-1">
+              {indicator.status_distribution.slice(0, 3).map((status, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">{status.status_name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">{status.count}</span>
+                    <div className="w-12 bg-gray-200 rounded-full h-1">
                       <div 
-                        className="h-2 rounded-full bg-blue-500"
-                        style={{ width: `${safePercentage(status.percentage)}%` }}
+                        className="h-1 rounded-full bg-blue-500"
+                        style={{ width: `${status.percentage}%` }}
                       />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Assigned Products */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Package2 className="h-5 w-5 text-blue-600" />
-              Productos Asignados ({indicator.assigned_products_count})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {indicator.assigned_products.map((product, index) => (
-                <div key={index} className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="font-medium text-gray-900 mb-1">{product.product_name}</div>
-                  <div className="text-sm text-gray-600 mb-2">ID: {product.product_id}</div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {product.country_name}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Package2 className="h-3 w-3" />
-                      {product.workpackage_name}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -445,16 +298,42 @@ function IndicatorsContent() {
           params.append('workPackage', selectedWorkPackage);
         }
 
-        const response = await fetch(`/api/output-performance?${params.toString()}`);
+        const response = await fetch(`/api/indicators-analytics?${params.toString()}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const data: OutputData = await response.json();
+        const data = await response.json();
         console.log('📊 Output data received:', data);
         
-        setOutputData(data);
+        // Transform data to match our new structure
+        const transformedData: OutputData = {
+          output_number: selectedOutput,
+          indicators: data.indicatorMetrics?.map((indicator: any) => ({
+            indicator_code: indicator.indicator_code,
+            indicator_name: indicator.indicator_name,
+            total_tasks: indicator.total_tasks || 0,
+            completed_tasks: indicator.completed_tasks || 0,
+            completion_percentage: indicator.completion_percentage || 0,
+            overdue_tasks: indicator.overdue_tasks || 0,
+            status_distribution: data.taskStatusMetrics || [],
+            trend: indicator.completion_percentage >= 75 ? 'up' : 
+                   indicator.completion_percentage >= 50 ? 'stable' : 'down',
+            performance_rating: indicator.completion_percentage >= 90 ? 'excellent' :
+                               indicator.completion_percentage >= 75 ? 'good' :
+                               indicator.completion_percentage >= 50 ? 'warning' : 'critical'
+          })) || [],
+          summary: {
+            total_indicators: data.indicatorMetrics?.length || 0,
+            avg_completion: data.indicatorMetrics?.reduce((acc: number, ind: any) => acc + (ind.completion_percentage || 0), 0) / (data.indicatorMetrics?.length || 1) || 0,
+            total_tasks: data.indicatorMetrics?.reduce((acc: number, ind: any) => acc + (ind.total_tasks || 0), 0) || 0,
+            completed_tasks: data.indicatorMetrics?.reduce((acc: number, ind: any) => acc + (ind.completed_tasks || 0), 0) || 0,
+            overdue_tasks: data.indicatorMetrics?.reduce((acc: number, ind: any) => acc + (ind.overdue_tasks || 0), 0) || 0,
+          }
+        };
+        
+        setOutputData(transformedData);
       } catch (error) {
         console.error('❌ Error fetching output data:', error);
         setOutputData(null);
@@ -577,7 +456,7 @@ function IndicatorsContent() {
                     )}
                   </p>
                 </div>
-                <PerformanceIndicator value={outputData.summary.avg_completion} />
+                <PerformanceIndicator value={outputData.summary.avg_completion} type="completion" />
               </div>
 
               {/* Métricas resumen */}
@@ -604,7 +483,7 @@ function IndicatorsContent() {
             {/* Grid de indicadores */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {outputData.indicators.map((indicator, index) => (
-                <IndicatorDetailModal key={index} indicator={indicator} />
+                <IndicatorCard key={index} indicator={indicator} />
               ))}
             </div>
 
