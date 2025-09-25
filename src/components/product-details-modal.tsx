@@ -81,17 +81,30 @@ export function ProductDetailsModal({ isOpen, onClose, productId }: ProductDetai
     setError(null);
     
     try {
+      console.log('🔍 Fetching product details for ID:', productId);
       const response = await fetch(`/api/product-full-details?productId=${productId}`);
+      
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+      
       const data = await response.json();
+      console.log('📋 Response data:', data);
       
       if (!response.ok) {
-        throw new Error(data.error || 'Error loading product details');
+        const errorMessage = data.error || data.details || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+      
+      // Verificar que la respuesta tiene la estructura esperada
+      if (!data.product) {
+        throw new Error('Respuesta del servidor no contiene datos del producto');
       }
       
       setProductDetail(data);
     } catch (err) {
-      console.error('Error fetching product details:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('❌ Error fetching product details:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al cargar detalles del producto';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -99,7 +112,14 @@ export function ProductDetailsModal({ isOpen, onClose, productId }: ProductDetai
 
   React.useEffect(() => {
     if (isOpen && productId) {
+      // Limpiar datos anteriores inmediatamente al abrir un nuevo modal
+      setProductDetail(null);
+      setError(null);
       fetchProductDetails();
+    } else if (!isOpen) {
+      // Limpiar cuando se cierra el modal
+      setProductDetail(null);
+      setError(null);
     }
   }, [isOpen, productId, fetchProductDetails]);
 
@@ -246,11 +266,13 @@ export function ProductDetailsModal({ isOpen, onClose, productId }: ProductDetai
                         key={indicator.indicator_id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-gray-900">{indicator.indicator_name}</p>
-                          <p className="text-sm text-gray-600">{indicator.indicator_code}</p>
+                          <p className="text-sm text-gray-600">Código: {indicator.indicator_code}</p>
                         </div>
-                        <Badge variant="outline">{indicator.indicator_code}</Badge>
+                        <Badge variant="secondary" className="ml-3">
+                          {indicator.indicator_code}
+                        </Badge>
                       </div>
                     ))}
                   </div>
@@ -275,21 +297,23 @@ export function ProductDetailsModal({ isOpen, onClose, productId }: ProductDetai
                         className="p-3 bg-gray-50 rounded-lg"
                       >
                         <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {responsible.user_name} {responsible.user_last_name}
-                            </p>
-                            <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-gray-900">
+                                {responsible.user_name} {responsible.user_last_name}
+                              </p>
+                              {responsible.is_primary && (
+                                <Badge variant="default" className="text-xs">Principal</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
                               <Mail className="h-3 w-3" />
                               {responsible.user_email}
                             </p>
-                            <p className="text-sm text-blue-600 font-medium mt-1">
+                            <Badge variant="outline" className="text-xs">
                               {responsible.role_label}
-                            </p>
+                            </Badge>
                           </div>
-                          {responsible.is_primary && (
-                            <Badge variant="default" className="text-xs">Principal</Badge>
-                          )}
                         </div>
                       </div>
                     ))}
