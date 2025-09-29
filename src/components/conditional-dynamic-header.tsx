@@ -1,6 +1,5 @@
 "use client"
 
-import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { DynamicPageHeader } from "./dynamic-page-header";
 
@@ -15,7 +14,6 @@ interface ConditionalDynamicHeaderProps {
 }
 
 export function ConditionalDynamicHeader({ workPackages = [] }: ConditionalDynamicHeaderProps) {
-  const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
