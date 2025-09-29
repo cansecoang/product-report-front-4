@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, Calendar, AlertCircle } from "lucide-react";
+import { Bell, Clock, Calendar, AlertCircle, Package } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +15,10 @@ import { Badge } from "@/components/ui/badge";
 interface CheckinTask {
   task_id: number;
   task_name: string;
+  product_id: number;
   product_name: string;
   checkin_date: string;
+  checkin_type: string;
   country_name: string;
   organization_name: string;
   status_name: string;
@@ -36,10 +38,20 @@ interface CheckinData {
   allCheckins: CheckinTask[];
 }
 
+interface ProductInfo {
+  product_id: number;
+  product_name: string;
+  delivery_date: string | null;
+  product_owner_name: string | null;
+  country_name: string | null;
+}
+
 export function CheckinNotifications() {
   const [checkinData, setCheckinData] = useState<CheckinData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedProductInfo, setSelectedProductInfo] = useState<ProductInfo | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
   const fetchCheckins = async () => {
     setIsLoading(true);
@@ -51,6 +63,21 @@ export function CheckinNotifications() {
       console.error('Error fetching check-ins:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCheckinClick = async (task: CheckinTask) => {
+    try {
+      const response = await fetch(`/api/product-info/${task.product_id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.product) {
+          setSelectedProductInfo(data.product);
+          setIsProductModalOpen(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching product info:', error);
     }
   };
 
@@ -98,6 +125,7 @@ export function CheckinNotifications() {
   const urgentCount = checkinData?.urgentCount || 0;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
@@ -157,7 +185,8 @@ export function CheckinNotifications() {
                 {checkinData.checkins.today.map((task) => (
                   <div
                     key={`today-${task.task_id}`}
-                    className={`p-3 rounded-lg border-l-4 ${getUrgencyColor(task.urgency_level)}`}
+                    className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
+                    onClick={() => handleCheckinClick(task)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -173,6 +202,8 @@ export function CheckinNotifications() {
                           <span>{task.country_name}</span>
                           <span>•</span>
                           <span>{task.organization_name}</span>
+                          <span>•</span>
+                          <span className="font-medium text-blue-600">{task.checkin_type}</span>
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -186,7 +217,8 @@ export function CheckinNotifications() {
                 {checkinData.checkins.tomorrow.map((task) => (
                   <div
                     key={`tomorrow-${task.task_id}`}
-                    className={`p-3 rounded-lg border-l-4 ${getUrgencyColor(task.urgency_level)}`}
+                    className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
+                    onClick={() => handleCheckinClick(task)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -202,6 +234,8 @@ export function CheckinNotifications() {
                           <span>{task.country_name}</span>
                           <span>•</span>
                           <span>{task.organization_name}</span>
+                          <span>•</span>
+                          <span className="font-medium text-blue-600">{task.checkin_type}</span>
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -215,7 +249,8 @@ export function CheckinNotifications() {
                 {checkinData.checkins.this_week.map((task) => (
                   <div
                     key={`week-${task.task_id}`}
-                    className={`p-3 rounded-lg border-l-4 ${getUrgencyColor(task.urgency_level)}`}
+                    className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
+                    onClick={() => handleCheckinClick(task)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -231,6 +266,8 @@ export function CheckinNotifications() {
                           <span>{task.country_name}</span>
                           <span>•</span>
                           <span>{task.organization_name}</span>
+                          <span>•</span>
+                          <span className="font-medium text-blue-600">{task.checkin_type}</span>
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -244,7 +281,8 @@ export function CheckinNotifications() {
                 {checkinData.checkins.later.slice(0, 5).map((task) => (
                   <div
                     key={`later-${task.task_id}`}
-                    className={`p-3 rounded-lg border-l-4 ${getUrgencyColor(task.urgency_level)}`}
+                    className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
+                    onClick={() => handleCheckinClick(task)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -260,6 +298,8 @@ export function CheckinNotifications() {
                           <span>{task.country_name}</span>
                           <span>•</span>
                           <span>{task.organization_name}</span>
+                          <span>•</span>
+                          <span className="font-medium text-blue-600">{task.checkin_type}</span>
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -290,5 +330,44 @@ export function CheckinNotifications() {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Modal de información del producto */}
+    <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-600" />
+            Información del Producto
+          </DialogTitle>
+        </DialogHeader>
+        {selectedProductInfo && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Nombre del Producto</label>
+                  <p className="text-sm text-gray-900 font-medium">{selectedProductInfo.product_name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">País</label>
+                  <p className="text-sm text-gray-900">{selectedProductInfo.country_name || 'No especificado'}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Fecha de Entrega</label>
+                  <p className="text-sm text-gray-900">{selectedProductInfo.delivery_date || 'No especificada'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Product Owner</label>
+                  <p className="text-sm text-gray-900">{selectedProductInfo.product_owner_name || 'No asignado'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -93,9 +93,33 @@ interface ProductDetailModalProps {
   onDelete?: () => void;
 }
 
+interface ProductCheckin {
+  task_id: number;
+  task_name: string;
+  checkin_date: string;
+  status_name: string;
+  organization_name: string;
+  days_until_checkin: number;
+  urgency_level: 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'later';
+}
+
+interface CheckinData {
+  totalCheckins: number;
+  checkins: {
+    overdue: ProductCheckin[];
+    today: ProductCheckin[];
+    tomorrow: ProductCheckin[];
+    this_week: ProductCheckin[];
+    later: ProductCheckin[];
+  };
+  allCheckins: ProductCheckin[];
+}
+
 export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete }: ProductDetailModalProps) {
   const [detailedInfo, setDetailedInfo] = useState<DetailedProductInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [checkinData, setCheckinData] = useState<CheckinData | null>(null);
+  const [isLoadingCheckins, setIsLoadingCheckins] = useState(false);
 
   const fetchDetailedInfo = useCallback(async () => {
     setIsLoading(true);
@@ -110,11 +134,27 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
     }
   }, [product.id]);
 
+  const fetchCheckins = useCallback(async () => {
+    setIsLoadingCheckins(true);
+    try {
+      const response = await fetch(`/api/product-checkins/${product.id}`);
+      const data = await response.json();
+      if (data.success) {
+        setCheckinData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching checkins:', error);
+    } finally {
+      setIsLoadingCheckins(false);
+    }
+  }, [product.id]);
+
   useEffect(() => {
     if (isOpen && product.id) {
       fetchDetailedInfo();
+      fetchCheckins();
     }
-  }, [isOpen, product.id, fetchDetailedInfo]);
+  }, [isOpen, product.id, fetchDetailedInfo, fetchCheckins]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Not specified';
@@ -381,6 +421,116 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                   )}
                 </section>
               )}
+
+              {/* Check-ins Section */}
+              <section>
+                <h3 className="text-lg font-medium mb-3">Check-ins del Producto</h3>
+                {isLoadingCheckins ? (
+                  <div className="flex items-center justify-center h-20">
+                    <p className="text-sm text-gray-500">Cargando check-ins...</p>
+                  </div>
+                ) : checkinData && checkinData.totalCheckins > 0 ? (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 mb-3">
+                      Total de check-ins: <span className="font-medium">{checkinData.totalCheckins}</span>
+                    </div>
+
+                    {/* Check-ins vencidos */}
+                    {checkinData.checkins.overdue.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-red-700 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                          Vencidos ({checkinData.checkins.overdue.length})
+                        </h4>
+                        {checkinData.checkins.overdue.map((checkin) => (
+                          <div key={`overdue-${checkin.task_id}`} className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p className="text-sm font-medium text-red-900">{checkin.task_name}</p>
+                            <p className="text-xs text-red-700">
+                              Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
+                            </p>
+                            <p className="text-xs text-red-600">
+                              Estado: {checkin.status_name} • {checkin.organization_name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Check-ins de hoy */}
+                    {checkinData.checkins.today.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-orange-700 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                          Hoy ({checkinData.checkins.today.length})
+                        </h4>
+                        {checkinData.checkins.today.map((checkin) => (
+                          <div key={`today-${checkin.task_id}`} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded">
+                            <p className="text-sm font-medium text-orange-900">{checkin.task_name}</p>
+                            <p className="text-xs text-orange-700">
+                              Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
+                            </p>
+                            <p className="text-xs text-orange-600">
+                              Estado: {checkin.status_name} • {checkin.organization_name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Check-ins próximos */}
+                    {(checkinData.checkins.tomorrow.length > 0 || checkinData.checkins.this_week.length > 0) && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-blue-700 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          Próximos ({checkinData.checkins.tomorrow.length + checkinData.checkins.this_week.length})
+                        </h4>
+                        {[...checkinData.checkins.tomorrow, ...checkinData.checkins.this_week].map((checkin) => (
+                          <div key={`upcoming-${checkin.task_id}`} className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                            <p className="text-sm font-medium text-blue-900">{checkin.task_name}</p>
+                            <p className="text-xs text-blue-700">
+                              Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')} 
+                              ({checkin.urgency_level === 'tomorrow' ? 'mañana' : 'esta semana'})
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Estado: {checkin.status_name} • {checkin.organization_name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Check-ins futuros */}
+                    {checkinData.checkins.later.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                          Futuros ({checkinData.checkins.later.length})
+                        </h4>
+                        {checkinData.checkins.later.slice(0, 3).map((checkin) => (
+                          <div key={`later-${checkin.task_id}`} className="p-3 bg-gray-50 border-l-4 border-gray-500 rounded">
+                            <p className="text-sm font-medium text-gray-900">{checkin.task_name}</p>
+                            <p className="text-xs text-gray-700">
+                              Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              Estado: {checkin.status_name} • {checkin.organization_name}
+                            </p>
+                          </div>
+                        ))}
+                        {checkinData.checkins.later.length > 3 && (
+                          <p className="text-xs text-gray-500 text-center">
+                            ... y {checkinData.checkins.later.length - 3} más
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-gray-500">No hay check-ins programados para este producto</p>
+                  </div>
+                )}
+              </section>
             </div>
           )}
         </div>

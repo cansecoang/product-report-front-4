@@ -5,21 +5,23 @@ export async function GET() {
   try {
     console.log('🔔 Fetching upcoming check-in dates...');
 
-    // Consultar tareas con fechas de check-in en los próximos 7 días
+    // Consultar tareas con fechas de check-in en los próximos 30 días usando las columnas correctas
     const upcomingCheckinsQuery = `
       SELECT 
         t.task_id,
         t.task_name,
+        p.product_id,
         p.product_name,
-        t.checkin AS checkin_date,
+        t.checkin_oro_verde AS checkin_date,
+        'Oro Verde' AS checkin_type,
         c.country_name,
         o.organization_name,
         s.status_name,
-        DATE_PART('day', t.checkin - CURRENT_DATE) as days_until_checkin,
+        DATE_PART('day', t.checkin_oro_verde - CURRENT_DATE) as days_until_checkin,
         CASE 
-          WHEN DATE(t.checkin) = CURRENT_DATE THEN 'today'
-          WHEN DATE(t.checkin) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
-          WHEN t.checkin BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          WHEN DATE(t.checkin_oro_verde) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_oro_verde) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_oro_verde BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
           ELSE 'later'
         END as urgency_level
       FROM tasks t
@@ -27,12 +29,100 @@ export async function GET() {
       LEFT JOIN countries c ON p.country_id = c.country_id
       LEFT JOIN organizations o ON t.responsable_id = o.organization_id
       LEFT JOIN status s ON t.status_id = s.status_id
-      WHERE t.checkin IS NOT NULL 
-        AND t.checkin >= CURRENT_DATE
-        AND t.checkin <= CURRENT_DATE + INTERVAL '30 days'
+      WHERE t.checkin_oro_verde IS NOT NULL 
+        AND t.checkin_oro_verde >= CURRENT_DATE
+        AND t.checkin_oro_verde <= CURRENT_DATE + INTERVAL '30 days'
         AND (s.status_name IS NULL OR s.status_name NOT IN ('Completed', 'Reviewed'))
-      ORDER BY t.checkin ASC, t.task_name
-      LIMIT 20
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        p.product_id,
+        p.product_name,
+        t.checkin_user AS checkin_date,
+        'Usuario' AS checkin_type,
+        c.country_name,
+        o.organization_name,
+        s.status_name,
+        DATE_PART('day', t.checkin_user - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN DATE(t.checkin_user) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_user) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_user BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      INNER JOIN products p ON t.product_id = p.product_id
+      LEFT JOIN countries c ON p.country_id = c.country_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      LEFT JOIN status s ON t.status_id = s.status_id
+      WHERE t.checkin_user IS NOT NULL 
+        AND t.checkin_user >= CURRENT_DATE
+        AND t.checkin_user <= CURRENT_DATE + INTERVAL '30 days'
+        AND (s.status_name IS NULL OR s.status_name NOT IN ('Completed', 'Reviewed'))
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        p.product_id,
+        p.product_name,
+        t.checkin_communication AS checkin_date,
+        'Comunicación' AS checkin_type,
+        c.country_name,
+        o.organization_name,
+        s.status_name,
+        DATE_PART('day', t.checkin_communication - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN DATE(t.checkin_communication) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_communication) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_communication BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      INNER JOIN products p ON t.product_id = p.product_id
+      LEFT JOIN countries c ON p.country_id = c.country_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      LEFT JOIN status s ON t.status_id = s.status_id
+      WHERE t.checkin_communication IS NOT NULL 
+        AND t.checkin_communication >= CURRENT_DATE
+        AND t.checkin_communication <= CURRENT_DATE + INTERVAL '30 days'
+        AND (s.status_name IS NULL OR s.status_name NOT IN ('Completed', 'Reviewed'))
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        p.product_id,
+        p.product_name,
+        t.checkin_gender AS checkin_date,
+        'Género' AS checkin_type,
+        c.country_name,
+        o.organization_name,
+        s.status_name,
+        DATE_PART('day', t.checkin_gender - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN DATE(t.checkin_gender) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_gender) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_gender BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      INNER JOIN products p ON t.product_id = p.product_id
+      LEFT JOIN countries c ON p.country_id = c.country_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      LEFT JOIN status s ON t.status_id = s.status_id
+      WHERE t.checkin_gender IS NOT NULL 
+        AND t.checkin_gender >= CURRENT_DATE
+        AND t.checkin_gender <= CURRENT_DATE + INTERVAL '30 days'
+        AND (s.status_name IS NULL OR s.status_name NOT IN ('Completed', 'Reviewed'))
+      
+      ORDER BY checkin_date ASC, task_name
+      LIMIT 50
     `;
 
     const result = await pool.query(upcomingCheckinsQuery);
@@ -64,44 +154,19 @@ export async function GET() {
   } catch (error) {
     console.error('❌ Error fetching upcoming check-ins:', error);
     
-    // Datos de fallback para desarrollo
-    const mockCheckins = {
-      today: [
-        {
-          task_id: 1,
-          task_name: 'Revisión de progreso - Encuesta cacao',
-          product_name: 'Encuesta a productores de cacao',
-          checkin_date: new Date().toISOString(),
-          country_name: 'Dominican Republic',
-          organization_name: 'OroVerde',
-          status_name: 'In Progress',
-          days_until_checkin: 0,
-          urgency_level: 'today'
-        }
-      ],
-      tomorrow: [
-        {
-          task_id: 2,
-          task_name: 'Check-in semanal - Biodiversidad café',
-          product_name: 'Línea base de biodiversidad en campo café',
-          checkin_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          country_name: 'Guatemala',
-          organization_name: 'Local Partner',
-          status_name: 'In Progress',
-          days_until_checkin: 1,
-          urgency_level: 'tomorrow'
-        }
-      ],
-      this_week: [],
-      later: []
-    };
-
+    // Devolver datos vacíos en lugar de mock data
     return NextResponse.json({
-      success: true,
-      totalUpcoming: 2,
-      urgentCount: 2,
-      checkins: mockCheckins,
-      allCheckins: [...mockCheckins.today, ...mockCheckins.tomorrow]
+      success: false,
+      error: 'Failed to fetch check-ins',
+      totalUpcoming: 0,
+      urgentCount: 0,
+      checkins: {
+        today: [],
+        tomorrow: [],
+        this_week: [],
+        later: []
+      },
+      allCheckins: []
     });
   }
 }
