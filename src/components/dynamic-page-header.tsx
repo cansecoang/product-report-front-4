@@ -37,6 +37,9 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
   
   // Mostrar dropdowns solo en la ruta /product (no en subrutas)
   const showMatrixFilters = pathname === '/product';
+  
+  // Título específico para la ruta raíz
+  const displayTitle = pathname === '/' ? 'Dashboard' : title;
 
   const handleProductAdded = () => {
     // Aquí puedes agregar lógica para refrescar la lista de productos
@@ -52,32 +55,37 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-medium text-foreground">{title}</h1>
+            <h1 className="text-lg font-medium text-foreground">{displayTitle}</h1>
           </div>
 
         </div>
         
         <div className="flex items-center gap-4">
-          {/* Controles de matriz SOLO para la ruta /product */}
-          {showMatrixFilters && <MatrixFiltersInline workPackages={workPackages} />}
-          
-          {/* Controles para otras rutas (NO /product) */}
-          {!showMatrixFilters && (
+          {/* Solo mostrar controles si NO estamos en la ruta raíz / */}
+          {pathname !== '/' && (
             <>
-              {/* Actions/controls específicos de cada página */}
-              {actions && actions}
+              {/* Controles de matriz SOLO para la ruta /product */}
+              {showMatrixFilters && <MatrixFiltersInline workPackages={workPackages} />}
               
-              {/* Botón Add Product en otras rutas de productos (no en /product) */}
-              {showAddProduct && (
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => setIsAddProductModalOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
+              {/* Controles para otras rutas (NO /product) */}
+              {!showMatrixFilters && (
+                <>
+                  {/* Actions/controls específicos de cada página */}
+                  {actions && actions}
+                  
+                  {/* Botón Add Product en otras rutas de productos (no en /product) */}
+                  {showAddProduct && (
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setIsAddProductModalOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Product
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}

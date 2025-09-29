@@ -214,20 +214,6 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
 
     // Transformamos las tareas del backend al formato que necesita D3
     const formattedTasks = tasks.length > 0 ? tasks.map(t => {
-      // Debug completo: verificar estructura de datos
-      console.log('🔍 Datos completos de tarea:', {
-        id: t.id,
-        name: t.name,
-        org_name: t.org_name,
-        org_id: t.org_id,
-        org_name_valid: t.org_name && t.org_name.trim() !== '',
-        organization_que_se_usara: t.org_name && t.org_name.trim() !== '' 
-          ? t.org_name 
-          : 'Sin organización asignada',
-        todasLasPropiedades: Object.keys(t), // Ver qué propiedades están disponibles
-        allData: t // Ver toda la estructura
-      });
-      
       return {
         id: t.id,
         task_id: t.id,

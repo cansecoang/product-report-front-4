@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useHeader } from '@/contexts/HeaderContext';
-import { Package } from 'lucide-react';
 import { ProductFilters } from '@/components/product-filters';
 
 interface WorkPackage {

@@ -42,8 +42,6 @@ export function NavUser() {
     .toUpperCase()
     .slice(0, 2)
 
-  console.log('NavUser Debug:', { userName: user.name, initials })
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>

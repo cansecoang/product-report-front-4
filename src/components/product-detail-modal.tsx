@@ -139,12 +139,21 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
     setIsLoadingCheckins(true);
     try {
       const response = await fetch(`/api/product-checkins/${product.id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success) {
         setCheckinData(data);
+      } else {
+        console.error('API returned error:', data.error);
       }
     } catch (error) {
       console.error('Error fetching checkins:', error);
+      // Reset checkinData to avoid showing stale data
+      setCheckinData(null);
     } finally {
       setIsLoadingCheckins(false);
     }
@@ -230,7 +239,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                     <p className="text-foreground mt-1">{product.name}</p>
                   </div>
                   <div>
-                    <span className="font-medium text-muted-foreground">Primary Organization:</span>
+                    <span className="font-medium text-muted-foreground">Product Owner:</span>
                     <p className="text-foreground mt-1">{product.primaryOrganization || 'Not assigned'}</p>
                   </div>
                   <div>
@@ -257,7 +266,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
               {/* Primary Organization Details */}
               {detailedInfo?.primaryOrganization && (
                 <section>
-                  <h3 className="text-lg font-medium mb-3">Primary Organization Details</h3>
+                  <h3 className="text-lg font-medium mb-3">Product Owner</h3>
                   <div className="p-4 bg-primary/5 rounded border border-primary/20">
                     <p className="font-medium text-primary">{detailedInfo.primaryOrganization.organization_name}</p>
                     {detailedInfo.primaryOrganization.organization_description && (
@@ -444,7 +453,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                           Vencidos ({checkinData.checkins.overdue.length})
                         </h4>
                         {checkinData.checkins.overdue.map((checkin) => (
-                          <div key={`overdue-${checkin.task_id}`} className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                          <div key={`overdue-${checkin.task_id}-${checkin.checkin_type}`} className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
                             <p className="text-sm font-medium text-red-900">{checkin.task_name}</p>
                             <p className="text-xs text-red-700">
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
@@ -465,7 +474,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                           Hoy ({checkinData.checkins.today.length})
                         </h4>
                         {checkinData.checkins.today.map((checkin) => (
-                          <div key={`today-${checkin.task_id}`} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded">
+                          <div key={`today-${checkin.task_id}-${checkin.checkin_type}`} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded">
                             <p className="text-sm font-medium text-orange-900">{checkin.task_name}</p>
                             <p className="text-xs text-orange-700">
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
@@ -486,7 +495,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                           Próximos ({checkinData.checkins.tomorrow.length + checkinData.checkins.this_week.length})
                         </h4>
                         {[...checkinData.checkins.tomorrow, ...checkinData.checkins.this_week].map((checkin) => (
-                          <div key={`upcoming-${checkin.task_id}`} className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                          <div key={`upcoming-${checkin.task_id}-${checkin.checkin_type}`} className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
                             <p className="text-sm font-medium text-blue-900">{checkin.task_name}</p>
                             <p className="text-xs text-blue-700">
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')} 
@@ -508,7 +517,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                           Futuros ({checkinData.checkins.later.length})
                         </h4>
                         {checkinData.checkins.later.slice(0, 3).map((checkin) => (
-                          <div key={`later-${checkin.task_id}`} className="p-3 bg-gray-50 border-l-4 border-gray-500 rounded">
+                          <div key={`later-${checkin.task_id}-${checkin.checkin_type}`} className="p-3 bg-gray-50 border-l-4 border-gray-500 rounded">
                             <p className="text-sm font-medium text-gray-900">{checkin.task_name}</p>
                             <p className="text-xs text-gray-700">
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}

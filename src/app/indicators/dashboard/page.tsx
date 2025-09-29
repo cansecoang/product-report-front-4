@@ -163,14 +163,7 @@ function IndicatorsDashboardContent() {
   // 🎯 Determinar qué mostrar
   const showInitialState = !selectedOutput || !selectedIndicator || !data;
   
-  useEffect(() => {
-    console.log('🏠 Debug state:', { 
-      selectedOutput, 
-      selectedIndicator, 
-      showInitialState, 
-      data: !!data 
-    });
-  }, [selectedOutput, selectedIndicator, showInitialState, data]);
+
 
   // Colores para gráficos
   const statusColors = useMemo(() => ({

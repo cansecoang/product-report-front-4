@@ -50,8 +50,6 @@ export function ProductMatrix() {
   
   // Obtener datos del contexto
   const {
-    selectedWorkPackage,
-    selectedOutput,
     matrixData,
     isLoadingMatrix,
   } = useProductMatrix();
