@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductsByWorkPackage, getProductsByWorkPackageAndOutput } from '@/lib/data-access';
+import { getProductsByWorkPackage, getProductsByWorkPackageAndOutput, getAllProducts } from '@/lib/data-access';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,23 +9,26 @@ export async function GET(request: NextRequest) {
     
     console.log(`🌐 API Call: workPackageId=${workPackageId}, outputNumber=${outputNumber}`);
 
-    if (!workPackageId) {
-      return NextResponse.json(
-        { error: 'workPackageId parameter is required' },
-        { status: 400 }
-      );
-    }
-
     let products;
     
+    // Si no hay filtros, devolver todos los productos
+    if (!workPackageId && !outputNumber) {
+      console.log(`🔄 Using getAllProducts (no filters)`);
+      products = await getAllProducts();
+    }
     // Si se proporciona outputNumber, filtrar por ambos criterios
-    if (outputNumber) {
+    else if (workPackageId && outputNumber) {
       console.log(`🔄 Using getProductsByWorkPackageAndOutput`);
       products = await getProductsByWorkPackageAndOutput(workPackageId, outputNumber);
-    } else {
+    }
+    // Solo filtrar por workPackageId
+    else if (workPackageId) {
       console.log(`🔄 Using getProductsByWorkPackage`);
-      // Solo filtrar por workPackageId (comportamiento original)
       products = await getProductsByWorkPackage(workPackageId);
+    }
+    else {
+      console.log(`🔄 Using getAllProducts (fallback)`);
+      products = await getAllProducts();
     }
     
     return NextResponse.json(products);

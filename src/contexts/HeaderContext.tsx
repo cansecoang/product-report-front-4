@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 interface HeaderContextType {
   title: string;
@@ -24,7 +24,7 @@ export function HeaderProvider({ children }: HeaderProviderProps) {
   const [icon, setIcon] = useState<React.ComponentType<{ className?: string }> | undefined>();
   const [actions, setActions] = useState<ReactNode>(null);
 
-  const setHeaderConfig = ({
+  const setHeaderConfig = useCallback(({
     title: newTitle,
     icon: newIcon,
     actions: newActions,
@@ -34,9 +34,9 @@ export function HeaderProvider({ children }: HeaderProviderProps) {
     actions?: ReactNode;
   }) => {
     setTitle(newTitle);
-    setIcon(() => newIcon);
+    setIcon(newIcon);
     setActions(newActions);
-  };
+  }, []);
 
   return (
     <HeaderContext.Provider

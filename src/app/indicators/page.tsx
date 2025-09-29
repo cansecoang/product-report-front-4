@@ -383,7 +383,9 @@ function IndicatorsContent() {
       icon: Target,
       actions: <IndicatorsFilters />
     });
-  }, [setHeaderConfig]);
+    // Solo ejecutar una vez al montar el componente
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 🎯 URL-FIRST: Leer parámetros de la URL
   useEffect(() => {
