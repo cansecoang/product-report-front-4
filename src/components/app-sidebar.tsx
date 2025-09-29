@@ -137,14 +137,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-2 py-4 flex flex-col">
         <NavMain items={data.navMain} />
-      </SidebarContent>
-      <SidebarFooter className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
-        <NavUser />
-        <div className="flex justify-center mt-4">
-          <CheckinNotifications />
+        <div className="mt-auto">
+          <div className="flex justify-center p-2">
+            <CheckinNotifications />
+          </div>
+          <NavUser />
         </div>
+      </SidebarContent>
+      <SidebarFooter className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20">
       </SidebarFooter>
     </Sidebar>
   )
