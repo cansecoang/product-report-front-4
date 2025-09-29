@@ -418,8 +418,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option key="empty-wp" value="">Seleccionar Work Package</option>
-                      {workPackages.map(wp => (
-                        <option key={wp.workpackage_id} value={wp.workpackage_id}>
+                      {workPackages.map((wp, index) => (
+                        <option key={`wp-${index}-${wp.workpackage_id}`} value={wp.workpackage_id}>
                           {wp.workpackage_name}
                         </option>
                       ))}
@@ -436,8 +436,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option key="empty-org" value="">Seleccionar Organización</option>
-                      {organizations.map(org => (
-                        <option key={org.organization_id} value={org.organization_id}>
+                      {organizations.map((org, index) => (
+                        <option key={`org-main-${index}-${org.organization_id}`} value={org.organization_id}>
                           {org.organization_name}
                         </option>
                       ))}
@@ -454,8 +454,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option key="empty-country" value="">Seleccionar País</option>
-                      {countries.map(country => (
-                        <option key={country.country_id} value={country.country_id}>
+                      {countries.map((country, index) => (
+                        <option key={`country-${index}-${country.country_id}`} value={country.country_id}>
                           {country.country_name}
                         </option>
                       ))}
@@ -524,8 +524,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
                             <option key={`empty-user-${index}`} value={0}>Seleccionar Usuario</option>
-                            {users.map(user => (
-                              <option key={`user-${index}-${user.user_id}`} value={user.user_id}>
+                            {users.map((user, userIndex) => (
+                              <option key={`user-${index}-${userIndex}-${user.user_id}`} value={user.user_id}>
                                 {user.user_name} {user.user_last_name}
                               </option>
                             ))}
@@ -588,8 +588,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
                             <option key={`empty-org-${index}`} value={0}>Seleccionar Organización</option>
-                            {organizations.map(org => (
-                              <option key={`org-${index}-${org.organization_id}`} value={org.organization_id}>
+                            {organizations.map((org, orgIndex) => (
+                              <option key={`org-assign-${index}-${orgIndex}-${org.organization_id}`} value={org.organization_id}>
                                 {org.organization_name}
                               </option>
                             ))}
@@ -624,8 +624,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
               <section>
                 <h3 className="text-lg font-medium mb-4 text-gray-900">Indicadores Relacionados</h3>
                 <div className="max-h-40 overflow-y-auto border rounded p-3 bg-gray-50">
-                  {indicators.map(indicator => (
-                    <label key={indicator.indicator_id} className="flex items-center space-x-2 py-1">
+                  {indicators.map((indicator, index) => (
+                    <label key={`indicator-${index}-${indicator.indicator_id}`} className="flex items-center space-x-2 py-1">
                       <input
                         type="checkbox"
                         checked={selectedIndicators.includes(indicator.indicator_id)}
@@ -653,8 +653,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                 <div className="mb-4">
                   <h4 className="text-md font-medium mb-2 text-gray-700">Organizaciones Distribuidoras</h4>
                   <div className="max-h-32 overflow-y-auto border rounded p-3 bg-orange-50">
-                    {organizations.map(org => (
-                      <label key={org.organization_id} className="flex items-center space-x-2 py-1">
+                    {organizations.map((org, index) => (
+                      <label key={`dist-org-${index}-${org.organization_id}`} className="flex items-center space-x-2 py-1">
                         <input
                           type="checkbox"
                           checked={distributorOrgs.includes(org.organization_id)}
@@ -676,8 +676,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                 <div className="mb-4">
                   <h4 className="text-md font-medium mb-2 text-gray-700">Usuarios Distribuidores</h4>
                   <div className="max-h-32 overflow-y-auto border rounded p-3 bg-blue-50">
-                    {users.map(user => (
-                      <label key={user.user_id} className="flex items-center space-x-2 py-1">
+                    {users.map((user, index) => (
+                      <label key={`dist-user-${index}-${user.user_id}`} className="flex items-center space-x-2 py-1">
                         <input
                           type="checkbox"
                           checked={distributorUsers.includes(user.user_id)}
