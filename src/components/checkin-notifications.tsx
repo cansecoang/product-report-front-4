@@ -56,11 +56,40 @@ export function CheckinNotifications() {
   const fetchCheckins = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/upcoming-checkins');
+      const response = await fetch('/api/upcoming-checkins', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-cache'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setCheckinData(data);
+      
+      if (data.success) {
+        setCheckinData(data);
+      } else {
+        console.error('API returned error:', data.error);
+        setCheckinData({
+          totalUpcoming: 0,
+          urgentCount: 0,
+          checkins: { today: [], tomorrow: [], this_week: [], later: [] },
+          allCheckins: []
+        });
+      }
     } catch (error) {
       console.error('Error fetching check-ins:', error);
+      // Mostrar datos vacíos en caso de error
+      setCheckinData({
+        totalUpcoming: 0,
+        urgentCount: 0,
+        checkins: { today: [], tomorrow: [], this_week: [], later: [] },
+        allCheckins: []
+      });
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +111,18 @@ export function CheckinNotifications() {
   };
 
   useEffect(() => {
-    fetchCheckins();
+    // Pequeño delay para asegurar que Next.js esté listo
+    const timeoutId = setTimeout(() => {
+      fetchCheckins();
+    }, 100);
+
     // Actualizar cada 5 minutos
     const interval = setInterval(fetchCheckins, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, []);
 
   const getUrgencyIcon = (urgency: string) => {

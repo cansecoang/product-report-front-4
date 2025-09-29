@@ -17,28 +17,99 @@ export async function GET(
 
     console.log('🔍 Fetching checkins for product ID:', productId);
 
-    // Consulta para obtener check-ins del producto
+    // Consulta para obtener check-ins del producto (todas las columnas de check-in)
     const checkinsQuery = `
       SELECT 
         t.task_id,
         t.task_name,
-        t.checkin AS checkin_date,
+        t.checkin_oro_verde AS checkin_date,
+        'Oro Verde' AS checkin_type,
         s.status_name,
         o.organization_name,
-        DATE_PART('day', t.checkin - CURRENT_DATE) as days_until_checkin,
+        DATE_PART('day', t.checkin_oro_verde - CURRENT_DATE) as days_until_checkin,
         CASE 
-          WHEN t.checkin < CURRENT_DATE THEN 'overdue'
-          WHEN DATE(t.checkin) = CURRENT_DATE THEN 'today'
-          WHEN DATE(t.checkin) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
-          WHEN t.checkin BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          WHEN t.checkin_oro_verde < CURRENT_DATE THEN 'overdue'
+          WHEN DATE(t.checkin_oro_verde) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_oro_verde) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_oro_verde BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
           ELSE 'later'
         END as urgency_level
       FROM tasks t
       LEFT JOIN status s ON t.status_id = s.status_id
       LEFT JOIN organizations o ON t.responsable_id = o.organization_id
       WHERE t.product_id = $1 
-        AND t.checkin IS NOT NULL
-      ORDER BY t.checkin ASC
+        AND t.checkin_oro_verde IS NOT NULL
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        t.checkin_user AS checkin_date,
+        'Usuario' AS checkin_type,
+        s.status_name,
+        o.organization_name,
+        DATE_PART('day', t.checkin_user - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN t.checkin_user < CURRENT_DATE THEN 'overdue'
+          WHEN DATE(t.checkin_user) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_user) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_user BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      LEFT JOIN status s ON t.status_id = s.status_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      WHERE t.product_id = $1 
+        AND t.checkin_user IS NOT NULL
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        t.checkin_communication AS checkin_date,
+        'Comunicación' AS checkin_type,
+        s.status_name,
+        o.organization_name,
+        DATE_PART('day', t.checkin_communication - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN t.checkin_communication < CURRENT_DATE THEN 'overdue'
+          WHEN DATE(t.checkin_communication) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_communication) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_communication BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      LEFT JOIN status s ON t.status_id = s.status_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      WHERE t.product_id = $1 
+        AND t.checkin_communication IS NOT NULL
+      
+      UNION ALL
+      
+      SELECT 
+        t.task_id,
+        t.task_name,
+        t.checkin_gender AS checkin_date,
+        'Género' AS checkin_type,
+        s.status_name,
+        o.organization_name,
+        DATE_PART('day', t.checkin_gender - CURRENT_DATE) as days_until_checkin,
+        CASE 
+          WHEN t.checkin_gender < CURRENT_DATE THEN 'overdue'
+          WHEN DATE(t.checkin_gender) = CURRENT_DATE THEN 'today'
+          WHEN DATE(t.checkin_gender) = CURRENT_DATE + INTERVAL '1 day' THEN 'tomorrow'
+          WHEN t.checkin_gender BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN 'this_week'
+          ELSE 'later'
+        END as urgency_level
+      FROM tasks t
+      LEFT JOIN status s ON t.status_id = s.status_id
+      LEFT JOIN organizations o ON t.responsable_id = o.organization_id
+      WHERE t.product_id = $1 
+        AND t.checkin_gender IS NOT NULL
+      
+      ORDER BY checkin_date ASC
     `;
 
     const result = await pool.query(checkinsQuery, [productId]);

@@ -97,6 +97,7 @@ interface ProductCheckin {
   task_id: number;
   task_name: string;
   checkin_date: string;
+  checkin_type: string;
   status_name: string;
   organization_name: string;
   days_until_checkin: number;
@@ -449,7 +450,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
                             </p>
                             <p className="text-xs text-red-600">
-                              Estado: {checkin.status_name} • {checkin.organization_name}
+                              Estado: {checkin.status_name} • {checkin.organization_name} • <span className="font-medium text-blue-700">{checkin.checkin_type}</span>
                             </p>
                           </div>
                         ))}
@@ -470,7 +471,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
                             </p>
                             <p className="text-xs text-orange-600">
-                              Estado: {checkin.status_name} • {checkin.organization_name}
+                              Estado: {checkin.status_name} • {checkin.organization_name} • <span className="font-medium text-blue-700">{checkin.checkin_type}</span>
                             </p>
                           </div>
                         ))}
@@ -492,7 +493,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                               ({checkin.urgency_level === 'tomorrow' ? 'mañana' : 'esta semana'})
                             </p>
                             <p className="text-xs text-blue-600">
-                              Estado: {checkin.status_name} • {checkin.organization_name}
+                              Estado: {checkin.status_name} • {checkin.organization_name} • <span className="font-medium text-blue-700">{checkin.checkin_type}</span>
                             </p>
                           </div>
                         ))}
@@ -513,7 +514,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
                               Fecha: {new Date(checkin.checkin_date).toLocaleDateString('es-ES')}
                             </p>
                             <p className="text-xs text-gray-600">
-                              Estado: {checkin.status_name} • {checkin.organization_name}
+                              Estado: {checkin.status_name} • {checkin.organization_name} • <span className="font-medium text-blue-700">{checkin.checkin_type}</span>
                             </p>
                           </div>
                         ))}
