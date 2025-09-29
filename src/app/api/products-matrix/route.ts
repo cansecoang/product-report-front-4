@@ -6,6 +6,8 @@ interface MatrixProduct {
   name: string;
   workPackageId: number;
   outputNumber: number;
+  deliveryDate?: string;
+  productOwnerName?: string;
 }
 
 interface MatrixIndicator {
@@ -37,6 +39,8 @@ interface DatabaseRow {
   indicator_code: string | null;
   indicator_name: string | null;
   output_number: number | null;
+  delivery_date: string | null;
+  product_owner_name: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -62,6 +66,8 @@ export async function GET(request: NextRequest) {
         p.product_name,
         p.workpackage_id,
         p.product_output,
+        TO_CHAR(p.delivery_date, 'YYYY-MM-DD') AS delivery_date,
+        o.organization_name AS product_owner_name,
         c.country_id,
         c.country_name,
         i.indicator_id,
@@ -70,6 +76,7 @@ export async function GET(request: NextRequest) {
         i.output_number
       FROM products p
       INNER JOIN countries c ON p.country_id = c.country_id
+      LEFT JOIN organizations o ON o.organization_id = p.product_owner_id
       LEFT JOIN product_indicators pi ON p.product_id = pi.product_id
       LEFT JOIN indicators i ON pi.indicator_id = i.indicator_id
       WHERE p.workpackage_id = $1 
@@ -146,7 +153,9 @@ function processMatrixData(rows: DatabaseRow[]) {
             id: r.product_id,
             name: r.product_name,
             workPackageId: r.workpackage_id,
-            outputNumber: r.product_output
+            outputNumber: r.product_output,
+            deliveryDate: r.delivery_date || undefined,
+            productOwnerName: r.product_owner_name || undefined
           });
         }
       });

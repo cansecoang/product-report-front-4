@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   Select,
   SelectContent,
@@ -32,6 +31,8 @@ interface Product {
   name: string;
   workPackageId: number;
   outputNumber: number;
+  deliveryDate?: string;
+  productOwnerName?: string;
 }
 
 interface Indicator {
@@ -71,8 +72,6 @@ interface ProductMatrixProps {
 }
 
 export function ProductMatrix({ workPackages }: ProductMatrixProps) {
-  const searchParams = useSearchParams();
-  
   // Estados
   const [selectedWorkPackage, setSelectedWorkPackage] = useState<string | null>(null);
   const [selectedOutput, setSelectedOutput] = useState<string | null>(null);
@@ -315,11 +314,29 @@ export function ProductMatrix({ workPackages }: ProductMatrixProps) {
                               {cell.products.map((product) => (
                                 <div 
                                   key={`product-${product.id}-${country.id}-${cell.indicator.id}`} 
-                                  className="p-2 bg-blue-50 rounded text-sm cursor-pointer hover:bg-blue-100 hover:shadow-sm transition-all duration-200"
+                                  className="p-3 bg-blue-50 rounded text-sm cursor-pointer hover:bg-blue-100 hover:shadow-sm transition-all duration-200 border-l-4 border-blue-400"
                                   onClick={() => handleProductClick(product.id)}
                                 >
-                                  <div className="font-medium text-blue-900">
+                                  <div className="font-medium text-blue-900 mb-2">
                                     {product.name}
+                                  </div>
+                                  <div className="space-y-1">
+                                    {product.deliveryDate && (
+                                      <div className="flex items-center text-xs text-gray-600">
+                                        <span className="font-medium mr-1">📅 Delivery:</span>
+                                        <span>{new Date(product.deliveryDate).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric'
+                                        })}</span>
+                                      </div>
+                                    )}
+                                    {product.productOwnerName && (
+                                      <div className="flex items-center text-xs text-gray-600">
+                                        <span className="font-medium mr-1">👤 Owner:</span>
+                                        <span className="truncate">{product.productOwnerName}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}
