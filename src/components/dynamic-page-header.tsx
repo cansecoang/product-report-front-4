@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useProductMatrix } from "@/contexts/ProductMatrixContext";
 
+
 interface WorkPackage {
   id: string;
   name: string;
@@ -53,6 +54,7 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-medium text-foreground">{title}</h1>
           </div>
+
         </div>
         
         <div className="flex items-center gap-4">

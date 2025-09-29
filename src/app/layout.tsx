@@ -4,7 +4,7 @@ import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar"
 import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper"
 import { FloatingTaskButton } from "@/components/floating-task-button"
-import { HeaderProvider } from "@/contexts/HeaderContext"
+import { ClientHeaderProvider } from "@/components/client-header-provider"
 import {
   SidebarInset,
   SidebarProvider,
@@ -37,7 +37,7 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
-        <HeaderProvider>
+        <ClientHeaderProvider>
           <SidebarProvider defaultOpen={false}>
             <AppSidebar />
             <SidebarInset className="flex flex-col h-screen">
@@ -50,7 +50,7 @@ export default function RootLayout({
               <FloatingTaskButton />
             </SidebarInset>
           </SidebarProvider>
-        </HeaderProvider>
+        </ClientHeaderProvider>
       </body>
     </html>
   );
