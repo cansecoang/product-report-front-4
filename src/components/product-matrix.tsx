@@ -193,9 +193,7 @@ export function ProductMatrix({ workPackages }: ProductMatrixProps) {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Products Matrix</h1>
-        <p className="text-gray-600 mt-2">
-          View products organized by indicators and countries
-        </p>
+       
       </div>
 
       {/* Dropdowns */}

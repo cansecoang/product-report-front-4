@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar"
-import { DynamicPageHeader } from "@/components/dynamic-page-header"
+import { ConditionalDynamicHeader } from "@/components/conditional-dynamic-header"
 import { FloatingTaskButton } from "@/components/floating-task-button"
 import { HeaderProvider } from "@/contexts/HeaderContext"
 import {
@@ -42,7 +42,7 @@ export default function RootLayout({
             <AppSidebar />
             <SidebarInset className="flex flex-col h-screen">
               {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
-              <DynamicPageHeader />
+              <ConditionalDynamicHeader />
               
               {/* Main Content - SCROLLABLE */}
               <div className="flex-1 overflow-auto relative">
