@@ -111,49 +111,49 @@ function MatrixFiltersInline({ workPackages }: { workPackages: WorkPackage[] }) 
 
   return (
     <div className="flex items-center gap-2">
-      {/* WorkPackage Dropdown */}
-      <div className="flex items-center gap-1">
-        <label className="text-xs font-medium text-gray-600 whitespace-nowrap">WP:</label>
-        <Select
-          value={selectedWorkPackage || ""}
-          onValueChange={handleWorkPackageChange}
-        >
-          <SelectTrigger className="w-[120px] h-9">
-            <SelectValue placeholder="Select WP" />
-          </SelectTrigger>
-          <SelectContent>
-            {workPackages.map((wp) => (
-              <SelectItem key={wp.id} value={wp.id}>
-                {wp.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Output Dropdown */}
+      {/* Output Dropdown - Ahora primero */}
       <div className="flex items-center gap-1">
         <label className="text-xs font-medium text-gray-600 whitespace-nowrap">Output:</label>
         <Select
-          value={selectedOutput || ""}
+          value={selectedOutput || "all"}
           onValueChange={handleOutputChange}
-          disabled={isLoadingOutputs || outputs.length === 0}
+          disabled={isLoadingOutputs}
         >
           <SelectTrigger className="w-[120px] h-9">
             <SelectValue 
               placeholder={
                 isLoadingOutputs 
                   ? "Loading..." 
-                  : outputs.length === 0 
-                    ? "No outputs" 
-                    : "Select Output"
+                  : "All Outputs"
               } 
             />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Outputs</SelectItem>
             {outputs.map((output) => (
               <SelectItem key={output.outputNumber} value={output.outputNumber}>
                 {output.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* WorkPackage Dropdown - Ahora segundo */}
+      <div className="flex items-center gap-1">
+        <label className="text-xs font-medium text-gray-600 whitespace-nowrap">WP:</label>
+        <Select
+          value={selectedWorkPackage || "all"}
+          onValueChange={handleWorkPackageChange}
+        >
+          <SelectTrigger className="w-[120px] h-9">
+            <SelectValue placeholder="All WPs" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All WPs</SelectItem>
+            {workPackages.map((wp) => (
+              <SelectItem key={wp.id} value={wp.id}>
+                {wp.name}
               </SelectItem>
             ))}
           </SelectContent>

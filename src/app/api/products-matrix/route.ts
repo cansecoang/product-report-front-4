@@ -50,13 +50,6 @@ export async function GET(request: NextRequest) {
     const outputNumber = searchParams.get('outputNumber');
     const countryId = searchParams.get('countryId');
 
-    if (!workPackageId || !outputNumber) {
-      return NextResponse.json(
-        { error: 'workPackageId and outputNumber parameters are required' },
-        { status: 400 }
-      );
-    }
-
     console.log('🔄 Fetching products matrix for:', { workPackageId, outputNumber, countryId });
 
     // Query para obtener la matriz de productos por indicadores y países
@@ -79,19 +72,42 @@ export async function GET(request: NextRequest) {
       LEFT JOIN organizations o ON o.organization_id = p.product_owner_id
       LEFT JOIN product_indicators pi ON p.product_id = pi.product_id
       LEFT JOIN indicators i ON pi.indicator_id = i.indicator_id
-      WHERE p.workpackage_id = $1 
-      AND p.product_output = $2
+      WHERE 1=1
     `;
 
-    const queryParams = [workPackageId, outputNumber];
+    const queryParams = [];
+    let paramCount = 0;
+
+    // Filtro por workPackage (solo si no es "all")
+    if (workPackageId && workPackageId !== 'all') {
+      paramCount++;
+      query += ` AND p.workpackage_id = $${paramCount}`;
+      queryParams.push(workPackageId);
+    }
+
+    // Filtro por output (solo si no es "all")
+    if (outputNumber && outputNumber !== 'all') {
+      paramCount++;
+      query += ` AND p.product_output = $${paramCount}`;
+      queryParams.push(outputNumber);
+      
+      // También filtrar indicadores por output_number
+      paramCount++;
+      query += ` AND i.output_number = $${paramCount}`;
+      queryParams.push(outputNumber);
+    }
 
     // Filtro opcional por país
-    if (countryId) {
-      query += ` AND p.country_id = $3`;
+    if (countryId && countryId !== 'all') {
+      paramCount++;
+      query += ` AND p.country_id = $${paramCount}`;
       queryParams.push(countryId);
     }
 
     query += ` ORDER BY c.country_name, i.indicator_code`;
+
+    console.log('🔍 Final query params:', queryParams);
+    console.log('🔍 Final query:', query);
 
     const result = await pool.query(query, queryParams);
     

@@ -271,8 +271,6 @@ function MetricsPageContent() {
       {/* Header con resumen ejecutivo basado en status reales */}
       {productSummary && (
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">{productSummary.product_name}</h1>
-          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">{productSummary.total_tasks}</div>

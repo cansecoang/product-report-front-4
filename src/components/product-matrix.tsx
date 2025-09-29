@@ -167,16 +167,6 @@ export function ProductMatrix() {
         </div>
       )}
 
-      {/* Empty State */}
-      {!selectedWorkPackage || !selectedOutput ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>Please select Work Package and Output to view the matrix</p>
-        </div>
-      ) : !matrixData && !isLoadingMatrix ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No data available for the selected criteria</p>
-        </div>
-      ) : null}
 
       {/* Product Detail Modal */}
       {selectedProductForModal && (

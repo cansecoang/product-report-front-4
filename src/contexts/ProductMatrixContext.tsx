@@ -71,10 +71,11 @@ interface ProductMatrixContextType {
 const ProductMatrixContext = createContext<ProductMatrixContextType | undefined>(undefined);
 
 export function ProductMatrixProvider({ children }: { children: ReactNode }) {
-  // Estados
-  const [selectedWorkPackage, setSelectedWorkPackage] = useState<string | null>(null);
-  const [selectedOutput, setSelectedOutput] = useState<string | null>(null);
+  // Estados - inicializar con "all" por defecto
+  const [selectedWorkPackage, setSelectedWorkPackage] = useState<string | null>("all");
+  const [selectedOutput, setSelectedOutput] = useState<string | null>("all");
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const [outputs, setOutputs] = useState<Output[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -144,28 +145,50 @@ export function ProductMatrixProvider({ children }: { children: ReactNode }) {
     fetchCountries();
   }, [fetchOutputs, fetchCountries]);
 
+  // Cargar matriz inicial con todos los productos (solo una vez)
+  useEffect(() => {
+    if (outputs.length > 0 && countries.length > 0 && !isInitialized) {
+      // Cargar todos los productos por defecto
+      console.log('🚀 Initial matrix load with all products');
+      fetchMatrix('all', 'all');
+      setIsInitialized(true);
+    }
+  }, [outputs.length, countries.length, isInitialized, fetchMatrix]);
+
   // Handlers
   const handleWorkPackageChange = useCallback((value: string) => {
     setSelectedWorkPackage(value);
     setMatrixData(null);
-    if (selectedOutput) {
-      fetchMatrix(value, selectedOutput, selectedCountry || undefined);
-    }
+    
+    // Usar los valores para fetchMatrix
+    const wpValue = value;
+    const outputValue = selectedOutput || 'all';
+    
+    console.log('🔄 WP Change - Fetching matrix with:', { wpValue, outputValue, country: selectedCountry });
+    fetchMatrix(wpValue, outputValue, selectedCountry || undefined);
   }, [selectedOutput, selectedCountry, fetchMatrix]);
 
   const handleOutputChange = useCallback((value: string) => {
     setSelectedOutput(value);
     setMatrixData(null);
-    if (selectedWorkPackage) {
-      fetchMatrix(selectedWorkPackage, value, selectedCountry || undefined);
-    }
+    
+    // Usar los valores para fetchMatrix
+    const wpValue = selectedWorkPackage || 'all';
+    const outputValue = value;
+    
+    console.log('🔄 Output Change - Fetching matrix with:', { wpValue, outputValue, country: selectedCountry });
+    fetchMatrix(wpValue, outputValue, selectedCountry || undefined);
   }, [selectedWorkPackage, selectedCountry, fetchMatrix]);
 
   const handleCountryChange = useCallback((value: string) => {
     setSelectedCountry(value === 'all' ? null : value);
-    if (selectedWorkPackage && selectedOutput) {
-      fetchMatrix(selectedWorkPackage, selectedOutput, value === 'all' ? undefined : value);
-    }
+    
+    const wpValue = selectedWorkPackage || 'all';
+    const outputValue = selectedOutput || 'all';
+    const countryValue = value === 'all' ? undefined : value;
+    
+    console.log('🔄 Country Change - Fetching matrix with:', { wpValue, outputValue, country: countryValue });
+    fetchMatrix(wpValue, outputValue, countryValue);
   }, [selectedWorkPackage, selectedOutput, fetchMatrix]);
 
   const value = {

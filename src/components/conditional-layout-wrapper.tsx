@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { ProductMatrixProvider } from "@/contexts/ProductMatrixContext";
 import { ConditionalDynamicHeader } from "@/components/conditional-dynamic-header";
+import { ProductInfoBar } from "@/components/product-info-bar";
 import { useEffect, useState } from "react";
 
 interface WorkPackage {
@@ -24,6 +25,7 @@ interface ConditionalLayoutWrapperProps {
 export function ConditionalLayoutWrapper({ children }: ConditionalLayoutWrapperProps) {
   const pathname = usePathname();
   const isProductRoute = pathname === '/product';
+  const isProductSubroute = pathname.startsWith('/product') && pathname !== '/product';
   const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
   
   useEffect(() => {
@@ -60,6 +62,8 @@ export function ConditionalLayoutWrapper({ children }: ConditionalLayoutWrapperP
   return (
     <>
       <ConditionalDynamicHeader />
+      {/* Mostrar ProductInfoBar solo en subrutas de /product cuando hay un productId */}
+      {isProductSubroute && <ProductInfoBar />}
       <div className="flex-1 overflow-auto relative">
         <div className="min-h-full">
           {children}
