@@ -1,12 +1,45 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
+// Helper function to get table columns
+import type { PoolClient } from 'pg';
+
+async function getTableColumns(client: PoolClient, tableName: string) {
+  const result = await client.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = $1 
+    ORDER BY ordinal_position
+  `, [tableName]);
+  
+  return result.rows.map((row: { column_name: string }) => row.column_name);
+}
+
+// Helper function to build dynamic SELECT query
+function buildSelectQuery(tableName: string, columns: string[], idColumn: string) {
+  const selectColumns = columns.join(', ');
+  return `SELECT ${selectColumns} FROM ${tableName} ORDER BY ${idColumn}`;
+}
+
 export async function GET() {
   try {
     const client = await pool.connect();
     
     try {
-      const query = `SELECT * FROM countries ORDER BY country_name`;
+      // Check if table exists
+      const tableCheck = await client.query(`
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_name = 'countries' AND table_schema = 'public'
+      `);
+      
+      if (tableCheck.rows.length === 0) {
+        return NextResponse.json({ countries: [] });
+      }
+
+      // Get all columns dynamically
+      const columns = await getTableColumns(client, 'countries');
+      const query = buildSelectQuery('countries', columns, columns[0]);
+      
       const result = await client.query(query);
 
       return NextResponse.json({
@@ -19,7 +52,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching countries:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch countries' }, 
+      { error: 'Failed to fetch countries', details: error instanceof Error ? error.message : 'Unknown error' }, 
       { status: 500 }
     );
   }

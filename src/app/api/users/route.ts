@@ -8,23 +8,23 @@ export async function GET() {
     try {
       const query = `
         SELECT *
-        FROM workpackages 
-        ORDER BY workpackage_name
+        FROM users 
+        ORDER BY user_name
       `;
-      
+
       const result = await client.query(query);
-      
+
       return NextResponse.json({
-        workpackages: result.rows
+        users: result.rows
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error fetching work packages:', error);
+    console.error('Error fetching users:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch work packages' },
+      { error: 'Failed to fetch users' }, 
       { status: 500 }
     );
   }
@@ -32,30 +32,30 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, description } = await request.json();
+    const { name, email, role, organization_id, is_active = true } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
-        INSERT INTO workpackages (workpackage_name, workpackage_description)
-        VALUES ($1, $2)
+        INSERT INTO users (user_name, user_email, user_role, organization_id, is_active)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `;
       
-      const result = await client.query(query, [name, description]);
+      const result = await client.query(query, [name, email, role, organization_id, is_active]);
       
       return NextResponse.json({
         success: true,
-        workpackage: result.rows[0]
+        user: result.rows[0]
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error creating work package:', error);
+    console.error('Error creating user:', error);
     return NextResponse.json(
-      { error: 'Failed to create work package' },
+      { error: 'Failed to create user' },
       { status: 500 }
     );
   }
@@ -63,38 +63,38 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, name, description } = await request.json();
+    const { id, name, email, role, organization_id, is_active } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
-        UPDATE workpackages 
-        SET workpackage_name = $1, workpackage_description = $2
-        WHERE workpackage_id = $3
+        UPDATE users 
+        SET user_name = $1, user_email = $2, user_role = $3, organization_id = $4, is_active = $5
+        WHERE user_id = $6
         RETURNING *
       `;
       
-      const result = await client.query(query, [name, description, id]);
+      const result = await client.query(query, [name, email, role, organization_id, is_active, id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(
-          { error: 'Work package not found' },
+          { error: 'User not found' },
           { status: 404 }
         );
       }
       
       return NextResponse.json({
         success: true,
-        workpackage: result.rows[0]
+        user: result.rows[0]
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error updating work package:', error);
+    console.error('Error updating user:', error);
     return NextResponse.json(
-      { error: 'Failed to update work package' },
+      { error: 'Failed to update user' },
       { status: 500 }
     );
   }
@@ -107,32 +107,32 @@ export async function DELETE(request: Request) {
     
     try {
       const query = `
-        DELETE FROM workpackages 
-        WHERE workpackage_id = $1
-        RETURNING workpackage_id
+        DELETE FROM users 
+        WHERE user_id = $1
+        RETURNING user_id
       `;
       
       const result = await client.query(query, [id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(
-          { error: 'Work package not found' },
+          { error: 'User not found' },
           { status: 404 }
         );
       }
       
       return NextResponse.json({
         success: true,
-        message: 'Work package deleted successfully'
+        message: 'User deleted successfully'
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error deleting work package:', error);
+    console.error('Error deleting user:', error);
     return NextResponse.json(
-      { error: 'Failed to delete work package' },
+      { error: 'Failed to delete user' },
       { status: 500 }
     );
   }

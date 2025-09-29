@@ -6,25 +6,20 @@ export async function GET() {
     const client = await pool.connect();
     
     try {
-      const query = `
-        SELECT *
-        FROM workpackages 
-        ORDER BY workpackage_name
-      `;
-      
+      const query = `SELECT * FROM phases ORDER BY phase_name`;
       const result = await client.query(query);
-      
+
       return NextResponse.json({
-        workpackages: result.rows
+        phases: result.rows
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error fetching work packages:', error);
+    console.error('Error fetching phases:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch work packages' },
+      { error: 'Failed to fetch phases' }, 
       { status: 500 }
     );
   }
@@ -37,7 +32,7 @@ export async function POST(request: Request) {
     
     try {
       const query = `
-        INSERT INTO workpackages (workpackage_name, workpackage_description)
+        INSERT INTO phases (phase_name, phase_description)
         VALUES ($1, $2)
         RETURNING *
       `;
@@ -46,16 +41,16 @@ export async function POST(request: Request) {
       
       return NextResponse.json({
         success: true,
-        workpackage: result.rows[0]
+        phase: result.rows[0]
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error creating work package:', error);
+    console.error('Error creating phase:', error);
     return NextResponse.json(
-      { error: 'Failed to create work package' },
+      { error: 'Failed to create phase' },
       { status: 500 }
     );
   }
@@ -68,9 +63,9 @@ export async function PUT(request: Request) {
     
     try {
       const query = `
-        UPDATE workpackages 
-        SET workpackage_name = $1, workpackage_description = $2
-        WHERE workpackage_id = $3
+        UPDATE phases 
+        SET phase_name = $1, phase_description = $2
+        WHERE phase_id = $3
         RETURNING *
       `;
       
@@ -78,23 +73,23 @@ export async function PUT(request: Request) {
       
       if (result.rows.length === 0) {
         return NextResponse.json(
-          { error: 'Work package not found' },
+          { error: 'Phase not found' },
           { status: 404 }
         );
       }
       
       return NextResponse.json({
         success: true,
-        workpackage: result.rows[0]
+        phase: result.rows[0]
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error updating work package:', error);
+    console.error('Error updating phase:', error);
     return NextResponse.json(
-      { error: 'Failed to update work package' },
+      { error: 'Failed to update phase' },
       { status: 500 }
     );
   }
@@ -107,32 +102,32 @@ export async function DELETE(request: Request) {
     
     try {
       const query = `
-        DELETE FROM workpackages 
-        WHERE workpackage_id = $1
-        RETURNING workpackage_id
+        DELETE FROM phases 
+        WHERE phase_id = $1
+        RETURNING phase_id
       `;
       
       const result = await client.query(query, [id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(
-          { error: 'Work package not found' },
+          { error: 'Phase not found' },
           { status: 404 }
         );
       }
       
       return NextResponse.json({
         success: true,
-        message: 'Work package deleted successfully'
+        message: 'Phase deleted successfully'
       });
       
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error deleting work package:', error);
+    console.error('Error deleting phase:', error);
     return NextResponse.json(
-      { error: 'Failed to delete work package' },
+      { error: 'Failed to delete phase' },
       { status: 500 }
     );
   }
