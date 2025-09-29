@@ -96,31 +96,48 @@ export function NavMain({
               <SidebarMenuItem>
                 {hasSubItems ? (
                   <>
-                    {/* Botón principal clickeable */}
-                    <div className="flex">
-                      <SidebarMenuButton 
-                        asChild
-                        tooltip={item.title}
-                        isActive={isItemActive}
-                        className="flex-1"
-                      >
-                        <Link href={item.url} onClick={handleLinkClick}>
-                          {item.icon && <item.icon />}
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      
-                      {/* Botón para expandir/colapsar */}
+                    {item.title === "Products" ? (
+                      // Para Products: botón único que funciona como link y expandir
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton 
-                          tooltip={`Expandir ${item.title}`}
+                          tooltip={item.title}
+                          isActive={isItemActive}
                           onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
-                          className="w-8 px-2"
+                          className="w-full"
                         >
-                          <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          <Link href={item.url} onClick={handleLinkClick} className="flex items-center gap-2 w-full">
+                            {item.icon && <item.icon />}
+                            <span>{item.title}</span>
+                          </Link>
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
-                    </div>
+                    ) : (
+                      // Para otros items: mantener el diseño original con dos botones
+                      <div className="flex">
+                        <SidebarMenuButton 
+                          asChild
+                          tooltip={item.title}
+                          isActive={isItemActive}
+                          className="flex-1"
+                        >
+                          <Link href={item.url} onClick={handleLinkClick}>
+                            {item.icon && <item.icon />}
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        
+                        {/* Botón para expandir/colapsar */}
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton 
+                            tooltip={`Expandir ${item.title}`}
+                            onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
+                            className="w-8 px-2"
+                          >
+                            <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                      </div>
+                    )}
                     
                     <CollapsibleContent>
                       <SidebarMenuSub>

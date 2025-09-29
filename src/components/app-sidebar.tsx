@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import {
   AudioWaveform,
   Command,
-  SquareTerminal,
+  Package,
   Home,
   BarChart3,
   Leaf,
@@ -60,7 +60,7 @@ const getData = (searchParams: URLSearchParams) => {
       {
         title: "Products",
         url: "/product",
-        icon: SquareTerminal,
+        icon: Package,
         isActive: true, // Hace que sea clickeable
         items: [
           {
