@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   Target, 
@@ -9,7 +9,6 @@ import {
   CheckCircle,
   Clock,
   Activity,
-  Filter,
   Package2,
   Eye,
   BarChart3,
@@ -18,13 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Dialog,
   DialogContent,
@@ -46,25 +39,7 @@ interface WorkPackage {
   workpackage_name: string;
 }
 
-interface IndicatorMetric {
-  indicator_code: string;
-  indicator_name: string;
-  total_tasks: number;
-  completed_tasks: number;
-  completion_percentage: number;
-  overdue_tasks: number;
-}
 
-interface TaskStatusMetric {
-  status_name: string;
-  count: number;
-  percentage: number;
-}
-
-interface ApiResponseData {
-  indicatorMetrics: IndicatorMetric[];
-  taskStatusMetrics: TaskStatusMetric[];
-}
 
 interface IndicatorPerformance {
   indicator_id: number;
@@ -393,6 +368,11 @@ function IndicatorsContent() {
     setShowProductModal(true);
   };
 
+  // 🎯 Función para navegar a un output específico
+  const handleOutputSelect = (outputNumber: string) => {
+    router.push(`/indicators?output=${outputNumber}`);
+  };
+
   // 🎯 URL-FIRST: Leer parámetros de la URL
   useEffect(() => {
     const urlOutput = searchParams.get('output');
@@ -410,36 +390,9 @@ function IndicatorsContent() {
     fetchWorkPackages();
   }, []);
 
-  // 🎯 URL-FIRST: Actualizar URL cuando cambian los estados
-  const updateURL = useCallback((output: string | null, workPackage: string | null) => {
-    const params = new URLSearchParams();
-    
-    if (output && output !== 'all') {
-      params.set('output', output);
-    }
-    
-    if (workPackage && workPackage !== 'all') {
-      params.set('workPackage', workPackage);
-    }
-    
-    const newURL = `/indicators${params.toString() ? '?' + params.toString() : ''}`;
-    console.log('🔗 Updating URL to:', newURL);
-    router.push(newURL);
-  }, [router]);
 
-  // 🎯 Handler para cambio de output (filtro principal)
-  const handleOutputChange = useCallback((outputId: string | null) => {
-    console.log('🔄 Output changed to:', outputId);
-    setSelectedOutput(outputId);
-    updateURL(outputId, selectedWorkPackage);
-  }, [selectedWorkPackage, updateURL]);
 
-  // 🎯 Handler para cambio de work package (filtro opcional)
-  const handleWorkPackageChange = useCallback((workPackageId: string | null) => {
-    console.log('🔄 Work Package changed to:', workPackageId);
-    setSelectedWorkPackage(workPackageId);
-    updateURL(selectedOutput, workPackageId);
-  }, [selectedOutput, updateURL]);
+
 
   // 🎯 Fetch outputs
   const fetchOutputs = async () => {
@@ -506,58 +459,6 @@ function IndicatorsContent() {
   // 🎯 RENDER: Nueva estructura UX centrada en outputs
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header con filtros principales */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">Indicadores de Rendimiento</h1>
-              </div>
-            </div>
-            
-            {/* Filtros UX-optimizados */}
-            <div className="flex items-center gap-4">
-              {/* Filtro principal: Output */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <Select value={selectedOutput || ''} onValueChange={handleOutputChange}>
-                  <SelectTrigger className="w-48 border-2 border-blue-200 focus:border-blue-500">
-                    <SelectValue placeholder="Seleccionar Output" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {outputs.map((output) => (
-                      <SelectItem key={output.outputNumber} value={output.outputNumber}>
-                        {output.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filtro opcional: Work Package */}
-              <div className="flex items-center gap-2 opacity-75">
-                <Package2 className="h-4 w-4 text-gray-400" />
-                <Select value={selectedWorkPackage || ''} onValueChange={handleWorkPackageChange}>
-                  <SelectTrigger className="w-48 border border-gray-300">
-                    <SelectValue placeholder="Filtrar por WP (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los Work Packages</SelectItem>
-                    {workPackages.map((wp) => (
-                      <SelectItem key={wp.workpackage_id} value={wp.workpackage_id.toString()}>
-                        {wp.workpackage_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!selectedOutput ? (
@@ -578,7 +479,7 @@ function IndicatorsContent() {
                     key={output.outputNumber}
                     variant="outline"
                     className="p-4 h-auto text-left hover:border-blue-500 hover:bg-blue-50"
-                    onClick={() => handleOutputChange(output.outputNumber)}
+                    onClick={() => handleOutputSelect(output.outputNumber)}
                   >
                     <div>
                       <div className="font-medium text-gray-900">{output.name}</div>

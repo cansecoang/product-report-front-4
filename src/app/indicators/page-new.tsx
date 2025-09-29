@@ -2,34 +2,16 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Legend,
-} from "recharts";
+
 import { 
   Target, 
   TrendingUp,
-  TrendingDown,
   AlertCircle,
   CheckCircle,
   Clock,
   Activity,
-  BarChart3,
   Filter,
   Package2,
-  Users,
-  Calendar,
   Eye
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
