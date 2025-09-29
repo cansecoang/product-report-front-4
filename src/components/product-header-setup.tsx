@@ -21,7 +21,6 @@ export function ProductHeaderSetup({ workPackages }: ProductHeaderSetupProps) {
   useEffect(() => {
     setHeaderConfig({
       title: "Products",
-      icon: Package,
       actions: <ProductFilters initialWorkPackages={workPackages} />
     });
   }, [setHeaderConfig, workPackages]);

@@ -417,7 +417,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       required
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Seleccionar Work Package</option>
+                      <option key="empty-wp" value="">Seleccionar Work Package</option>
                       {workPackages.map(wp => (
                         <option key={wp.workpackage_id} value={wp.workpackage_id}>
                           {wp.workpackage_name}
@@ -435,7 +435,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       required
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Seleccionar Organización</option>
+                      <option key="empty-org" value="">Seleccionar Organización</option>
                       {organizations.map(org => (
                         <option key={org.organization_id} value={org.organization_id}>
                           {org.organization_name}
@@ -453,7 +453,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                       required
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Seleccionar País</option>
+                      <option key="empty-country" value="">Seleccionar País</option>
                       {countries.map(country => (
                         <option key={country.country_id} value={country.country_id}>
                           {country.country_name}
@@ -523,9 +523,9 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                             onChange={(e) => updateResponsible(index, 'user_id', parseInt(e.target.value))}
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
-                            <option value={0}>Seleccionar Usuario</option>
+                            <option key={`empty-user-${index}`} value={0}>Seleccionar Usuario</option>
                             {users.map(user => (
-                              <option key={user.user_id} value={user.user_id}>
+                              <option key={`user-${index}-${user.user_id}`} value={user.user_id}>
                                 {user.user_name} {user.user_last_name}
                               </option>
                             ))}
@@ -587,9 +587,9 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                             onChange={(e) => updateOrganization(index, 'organization_id', parseInt(e.target.value))}
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                           >
-                            <option value={0}>Seleccionar Organización</option>
+                            <option key={`empty-org-${index}`} value={0}>Seleccionar Organización</option>
                             {organizations.map(org => (
-                              <option key={org.organization_id} value={org.organization_id}>
+                              <option key={`org-${index}-${org.organization_id}`} value={org.organization_id}>
                                 {org.organization_name}
                               </option>
                             ))}

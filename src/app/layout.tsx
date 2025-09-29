@@ -3,6 +3,7 @@ import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar"
 import { DynamicPageHeader } from "@/components/dynamic-page-header"
+import { FloatingTaskButton } from "@/components/floating-task-button"
 import { HeaderProvider } from "@/contexts/HeaderContext"
 import {
   SidebarInset,
@@ -44,10 +45,12 @@ export default function RootLayout({
               <DynamicPageHeader />
               
               {/* Main Content - SCROLLABLE */}
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto relative">
                 <div className="min-h-full">
                   {children}
                 </div>
+                {/* Botón flotante para agregar tareas */}
+                <FloatingTaskButton />
               </div>
             </SidebarInset>
           </SidebarProvider>
