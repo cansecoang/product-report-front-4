@@ -31,13 +31,14 @@ export async function GET(request: NextRequest) {
       products = await getAllProducts();
     }
     
-    return NextResponse.json(products);
+    // Asegurar que siempre devolvemos un array
+    const productsArray = Array.isArray(products) ? products : [];
+    console.log(`✅ Returning ${productsArray.length} products`);
+    
+    return NextResponse.json(productsArray);
 
   } catch (error) {
     console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 200 }); // Devolver array vacío en lugar de error
   }
 }

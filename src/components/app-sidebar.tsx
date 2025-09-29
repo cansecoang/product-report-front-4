@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import {
   AudioWaveform,
   Command,
@@ -11,7 +12,8 @@ import {
   Leaf,
   Target,
   Calendar,
-  ListChecks
+  ListChecks,
+  Settings
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -140,6 +142,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent className="px-2 py-4 flex flex-col">
         <NavMain items={data.navMain} />
         <div className="mt-auto">
+          <div className="flex justify-center">
+            <Link 
+              href="/settings" 
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+            >
+              <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            </Link>
+          </div>
           <div className="flex justify-center p-2">
             <CheckinNotifications />
           </div>

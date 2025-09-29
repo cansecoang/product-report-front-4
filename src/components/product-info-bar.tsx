@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calendar, User, Globe, Package } from 'lucide-react';
+import { Calendar, User, Globe, Package, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ProductDetailModal } from '@/components/product-detail-modal';
 
 interface ProductInfo {
   product_id: number;
@@ -19,6 +21,7 @@ export function ProductInfoBar() {
   const [productInfo, setProductInfo] = useState<ProductInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
 
   useEffect(() => {
     if (!productId) {
@@ -86,7 +89,7 @@ export function ProductInfoBar() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border-b border-emerald-200 dark:border-emerald-800 px-6 py-2 sticky">
+    <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border-b border-emerald-200 dark:border-emerald-800 px-6 py-2 sticky top-0 z-20">
       <div className="flex items-center justify-between">
         {/* Información principal del producto */}
         <div className="flex items-center gap-6">
@@ -134,7 +137,33 @@ export function ProductInfoBar() {
           </div>
         </div>
 
+        {/* Botón de detalle del producto */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsProductDetailOpen(true)}
+          className="flex items-center gap-2 bg-white/80 hover:bg-white border-emerald-300"
+        >
+          <Info className="h-4 w-4" />
+          Ver Detalle
+        </Button>
       </div>
+
+      {/* Modal de detalle del producto */}
+      <ProductDetailModal
+        product={{
+          id: productInfo.product_id.toString(),
+          name: productInfo.product_name,
+          deliveryDate: productInfo.delivery_date || undefined,
+          workPackageId: '',
+          country: productInfo.country_name || undefined,
+          primaryOrganization: productInfo.product_owner_name || undefined
+        }}
+        isOpen={isProductDetailOpen}
+        onClose={() => setIsProductDetailOpen(false)}
+        onEdit={() => {}}
+        onDelete={() => {}}
+      />
     </div>
   );
 }

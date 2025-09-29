@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
@@ -177,8 +178,8 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -186,7 +187,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
       />
       
       {/* Modal */}
-      <div className="relative bg-background rounded-lg border shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="relative bg-background rounded-lg border shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden z-[10000]">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Product Details</h2>
@@ -547,4 +548,9 @@ export function ProductDetailModal({ product, isOpen, onClose, onEdit, onDelete 
       </div>
     </div>
   );
+
+  // Usar portal para renderizar el modal en el body
+  return typeof window !== 'undefined' 
+    ? createPortal(modalContent, document.body)
+    : null;
 }

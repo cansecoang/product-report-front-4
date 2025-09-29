@@ -104,11 +104,14 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
       .then(response => response.json())
       .then(data => {
         console.log('✅ Initial products loaded:', data?.length || 0, data);
-        setProducts(data || []);
+        // Asegurar que data sea un array
+        const productsArray = Array.isArray(data) ? data : [];
+        setProducts(productsArray);
         setLoadingProducts(false);
       })
       .catch(error => {
         console.error('❌ Error fetching initial products:', error);
+        setProducts([]); // Asegurar que products sea un array vacío en caso de error
         setLoadingProducts(false);
       });
   }, []);
@@ -124,11 +127,15 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
       fetch(`/api/products-server?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
-          setProducts(data || []);
+          console.log('✅ Products loaded with filters:', data?.length || 0, data);
+          // Asegurar que data sea un array
+          const productsArray = Array.isArray(data) ? data : [];
+          setProducts(productsArray);
           setLoadingProducts(false);
         })
         .catch(error => {
           console.error('❌ Error fetching products:', error);
+          setProducts([]); // Asegurar que products sea un array vacío en caso de error
           setLoadingProducts(false);
         });
     }
@@ -208,7 +215,7 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los Productos</SelectItem>
-            {products.map((product) => {
+            {Array.isArray(products) && products.map((product) => {
               console.log('📋 Rendering product:', product.name);
               return (
                 <SelectItem key={product.id} value={product.id}>
