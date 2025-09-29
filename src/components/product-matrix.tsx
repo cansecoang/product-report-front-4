@@ -1,25 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from 'react';
 import { ProductDetailModal } from "@/components/product-detail-modal";
-
-interface WorkPackage {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface Output {
-  outputNumber: string;
-  name: string;
-}
+import { useProductMatrix } from "@/contexts/ProductMatrixContext";
 
 interface Country {
   id: number;
@@ -48,13 +31,6 @@ interface MatrixCell {
   products: Product[];
 }
 
-interface MatrixData {
-  indicators: Indicator[];
-  countries: Country[];
-  matrix: (Country | MatrixCell)[][];
-  totalProducts: number;
-}
-
 interface ProductInfo {
   id: string;
   name: string;
@@ -67,111 +43,18 @@ interface ProductInfo {
   country?: string;
 }
 
-interface ProductMatrixProps {
-  workPackages: WorkPackage[];
-}
-
-export function ProductMatrix({ workPackages }: ProductMatrixProps) {
-  // Estados
-  const [selectedWorkPackage, setSelectedWorkPackage] = useState<string | null>(null);
-  const [selectedOutput, setSelectedOutput] = useState<string | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  
-  const [outputs, setOutputs] = useState<Output[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [matrixData, setMatrixData] = useState<MatrixData | null>(null);
-  
-  const [isLoadingOutputs, setIsLoadingOutputs] = useState(false);
-  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
-  const [isLoadingMatrix, setIsLoadingMatrix] = useState(false);
-
+export function ProductMatrix() {
   // Estados para el modal de detalles del producto
   const [selectedProductForModal, setSelectedProductForModal] = useState<ProductInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Cargar outputs
-  const fetchOutputs = useCallback(async () => {
-    setIsLoadingOutputs(true);
-    try {
-      const response = await fetch('/api/outputs');
-      if (!response.ok) throw new Error('Failed to fetch outputs');
-      const data = await response.json();
-      setOutputs(data.outputs || []);
-    } catch (error) {
-      console.error('Error fetching outputs:', error);
-      setOutputs([]);
-    } finally {
-      setIsLoadingOutputs(false);
-    }
-  }, []);
-
-  // Cargar países
-  const fetchCountries = useCallback(async () => {
-    setIsLoadingCountries(true);
-    try {
-      const response = await fetch('/api/countries');
-      if (!response.ok) throw new Error('Failed to fetch countries');
-      const data = await response.json();
-      setCountries(data.countries || []);
-    } catch (error) {
-      console.error('Error fetching countries:', error);
-      setCountries([]);
-    } finally {
-      setIsLoadingCountries(false);
-    }
-  }, []);
-
-  // Cargar matriz de productos
-  const fetchMatrix = useCallback(async (workPackageId: string, outputNumber: string, countryId?: string) => {
-    setIsLoadingMatrix(true);
-    try {
-      const params = new URLSearchParams({
-        workPackageId,
-        outputNumber
-      });
-      if (countryId) params.set('countryId', countryId);
-      
-      const response = await fetch(`/api/products-matrix?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch matrix');
-      const data = await response.json();
-      setMatrixData(data);
-    } catch (error) {
-      console.error('Error fetching matrix:', error);
-      setMatrixData(null);
-    } finally {
-      setIsLoadingMatrix(false);
-    }
-  }, []);
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    fetchOutputs();
-    fetchCountries();
-  }, [fetchOutputs, fetchCountries]);
-
-  // Handlers
-  const handleWorkPackageChange = (value: string) => {
-    setSelectedWorkPackage(value);
-    setMatrixData(null);
-    if (selectedOutput) {
-      fetchMatrix(value, selectedOutput, selectedCountry || undefined);
-    }
-  };
-
-  const handleOutputChange = (value: string) => {
-    setSelectedOutput(value);
-    setMatrixData(null);
-    if (selectedWorkPackage) {
-      fetchMatrix(selectedWorkPackage, value, selectedCountry || undefined);
-    }
-  };
-
-  const handleCountryChange = (value: string) => {
-    setSelectedCountry(value === 'all' ? null : value);
-    if (selectedWorkPackage && selectedOutput) {
-      fetchMatrix(selectedWorkPackage, selectedOutput, value === 'all' ? undefined : value);
-    }
-  };
+  
+  // Obtener datos del contexto
+  const {
+    selectedWorkPackage,
+    selectedOutput,
+    matrixData,
+    isLoadingMatrix,
+  } = useProductMatrix();
 
   // Handler para abrir modal de detalles del producto
   const handleProductClick = async (productId: number) => {
@@ -189,86 +72,6 @@ export function ProductMatrix({ workPackages }: ProductMatrixProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Products Matrix</h1>
-       
-      </div>
-
-      {/* Dropdowns */}
-      <div className="flex flex-wrap gap-4 p-4 bg-white rounded-lg border">
-        {/* WorkPackage Dropdown */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium mb-1">Work Package</label>
-          <Select
-            value={selectedWorkPackage || ""}
-            onValueChange={handleWorkPackageChange}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Work Package" />
-            </SelectTrigger>
-            <SelectContent>
-              {workPackages.map((wp) => (
-                <SelectItem key={wp.id} value={wp.id}>
-                  {wp.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Output Dropdown */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium mb-1">Output</label>
-          <Select
-            value={selectedOutput || ""}
-            onValueChange={handleOutputChange}
-            disabled={isLoadingOutputs || outputs.length === 0}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue 
-                placeholder={
-                  isLoadingOutputs 
-                    ? "Loading..." 
-                    : outputs.length === 0 
-                      ? "No outputs" 
-                      : "Select Output"
-                } 
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {outputs.map((output) => (
-                <SelectItem key={output.outputNumber} value={output.outputNumber}>
-                  {output.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Country Dropdown (Optional) */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium mb-1">Country (Optional)</label>
-          <Select
-            value={selectedCountry || "all"}
-            onValueChange={handleCountryChange}
-            disabled={isLoadingCountries || countries.length === 0}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Countries" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
-              {countries.map((country) => (
-                <SelectItem key={country.id} value={country.id.toString()}>
-                  {country.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       {/* Matrix Table */}
       {isLoadingMatrix && (
         <div className="flex justify-center items-center py-8">

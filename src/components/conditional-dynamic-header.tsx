@@ -4,20 +4,30 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { DynamicPageHeader } from "./dynamic-page-header";
 
-export function ConditionalDynamicHeader() {
+interface WorkPackage {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface ConditionalDynamicHeaderProps {
+  workPackages?: WorkPackage[];
+}
+
+export function ConditionalDynamicHeader({ workPackages = [] }: ConditionalDynamicHeaderProps) {
   const pathname = usePathname();
-  const [shouldShowHeader, setShouldShowHeader] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
-    // Solo ocultar el header en la ruta raíz /product
-    setShouldShowHeader(pathname !== '/product');
-  }, [pathname]);
+    // Marcar que estamos en el cliente para evitar hydration mismatch
+    setIsClient(true);
+  }, []);
   
-  // Durante la hidratación, mostrar el header para evitar mismatch
-  // Después del mounting, useEffect determinará si debe mostrarse o no
-  if (!shouldShowHeader) {
-    return null;
+  // Durante SSR y antes de que se complete la hidratación, mostrar el header básico
+  if (!isClient) {
+    return <DynamicPageHeader workPackages={workPackages} />;
   }
-  
-  return <DynamicPageHeader />;
+
+  // Siempre mostrar el header, incluyendo en /product
+  return <DynamicPageHeader workPackages={workPackages} />;
 }
