@@ -38,7 +38,7 @@ export default function RootLayout({
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
         <HeaderProvider>
-          <SidebarProvider>
+          <SidebarProvider defaultOpen={false}>
             <AppSidebar />
             <SidebarInset className="flex flex-col h-screen">
               {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}

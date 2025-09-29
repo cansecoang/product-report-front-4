@@ -45,10 +45,15 @@ export function NavMain({
   useEffect(() => {
     const activeItems = new Set<string>()
     items.forEach(item => {
-      const isItemActive = pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url + '/'))
-      if (isItemActive && item.items && item.items.length > 0) {
-        activeItems.add(item.title)
+      // Solo expandir automáticamente si estamos en una subruta específica
+      if (item.items && item.items.length > 0) {
+        // Verificar si alguna subruta específica está activa
+        const hasActiveSubItem = item.items.some(subItem => pathname === subItem.url)
+        if (hasActiveSubItem) {
+          activeItems.add(item.title)
+        }
       }
+      // NUNCA expandir automáticamente para rutas principales como /product
     })
     setOpenItems(activeItems)
   }, [pathname, items])
@@ -98,19 +103,53 @@ export function NavMain({
                   <>
                     {item.title === "Products" ? (
                       // Para Products: botón único que funciona como link y expandir
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton 
-                          tooltip={item.title}
-                          isActive={isItemActive}
-                          onClick={() => handleCollapsibleClick(item.title, hasSubItems)}
-                          className="w-full"
+                      <SidebarMenuButton 
+                        asChild
+                        tooltip={item.title}
+                        isActive={isItemActive}
+                        className="w-full"
+                      >
+                        <Link 
+                          href={item.url} 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            
+                            // Si la sidebar está colapsada, solo expandir
+                            if (state === "collapsed") {
+                              setOpen(true);
+                              // También expandir el item de Products
+                              setOpenItems(prev => new Set([...prev, item.title]));
+                              return;
+                            }
+                            
+                            // Si la sidebar está expandida, navegar y alternar expansión
+                            
+                            // Alternar el estado de expansión de las subrutas
+                            const isCurrentlyOpen = openItems.has(item.title);
+                            if (isCurrentlyOpen) {
+                              setOpenItems(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(item.title);
+                                return newSet;
+                              });
+                            } else {
+                              setOpenItems(prev => new Set([...prev, item.title]));
+                            }
+                            
+                            // Contraer la navbar y navegar
+                            setOpen(false);
+                            
+                            // Navegar a la URL después de contraer
+                            setTimeout(() => {
+                              window.location.href = item.url;
+                            }, 200);
+                          }}
+                          className="flex items-center gap-2 w-full"
                         >
-                          <Link href={item.url} onClick={handleLinkClick} className="flex items-center gap-2 w-full">
-                            {item.icon && <item.icon />}
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
+                          {item.icon && <item.icon />}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     ) : (
                       // Para otros items: mantener el diseño original con dos botones
                       <div className="flex">
