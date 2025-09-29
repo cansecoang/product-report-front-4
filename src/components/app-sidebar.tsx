@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import { CheckinNotifications } from "@/components/checkin-notifications"
 import {
@@ -140,7 +141,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter className=" dark:border-green-800 bg-white/50 dark:bg-green-900/20 p-4">
-        <div className="flex justify-center">
+        <NavUser />
+        <div className="flex justify-center mt-4">
           <CheckinNotifications />
         </div>
       </SidebarFooter>

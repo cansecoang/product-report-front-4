@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
 import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/app-sidebar"
-import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper"
-import { FloatingTaskButton } from "@/components/floating-task-button"
-import { ClientHeaderProvider } from "@/components/client-header-provider"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { ConditionalLayout } from "@/components/conditional-layout"
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -37,20 +31,11 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
-        <ClientHeaderProvider>
-          <SidebarProvider defaultOpen={false}>
-            <AppSidebar />
-            <SidebarInset className="flex flex-col h-screen">
-              {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
-              <ConditionalLayoutWrapper>
-                {children}
-              </ConditionalLayoutWrapper>
-              
-              {/* Floating Task Button - FIXED position */}
-              <FloatingTaskButton />
-            </SidebarInset>
-          </SidebarProvider>
-        </ClientHeaderProvider>
+        <AuthProvider>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
+        </AuthProvider>
       </body>
     </html>
   );
