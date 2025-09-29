@@ -3,6 +3,7 @@ import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar"
 import { DynamicPageHeader } from "@/components/dynamic-page-header"
+import { HeaderProvider } from "@/contexts/HeaderContext"
 import {
   SidebarInset,
   SidebarProvider,
@@ -35,20 +36,22 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset className="flex flex-col h-screen">
-            {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
-            <DynamicPageHeader />
-            
-            {/* Main Content - SCROLLABLE */}
-            <div className="flex-1 overflow-auto">
-              <div className="min-h-full">
-                {children}
+        <HeaderProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="flex flex-col h-screen">
+              {/* Dynamic Page Header - shows sidebar toggle + current section - FIXED */}
+              <DynamicPageHeader />
+              
+              {/* Main Content - SCROLLABLE */}
+              <div className="flex-1 overflow-auto">
+                <div className="min-h-full">
+                  {children}
+                </div>
               </div>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+            </SidebarInset>
+          </SidebarProvider>
+        </HeaderProvider>
       </body>
     </html>
   );

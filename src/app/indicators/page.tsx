@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useHeader } from "@/contexts/HeaderContext";
+import { IndicatorsFilters } from "@/components/indicators-filters";
 import { 
   Target, 
   TrendingUp,
@@ -347,6 +349,7 @@ function IndicatorDetailModal({
 function IndicatorsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { setHeaderConfig } = useHeader();
 
   // 🎯 URL-FIRST: Estados desde URL - Simplificado para UX centrada en outputs
   const [selectedOutput, setSelectedOutput] = useState<string | null>(null);
@@ -372,6 +375,15 @@ function IndicatorsContent() {
   const handleOutputSelect = (outputNumber: string) => {
     router.push(`/indicators?output=${outputNumber}`);
   };
+
+  // 🎯 Configurar el header con título y acciones
+  useEffect(() => {
+    setHeaderConfig({
+      title: "Indicadores de Rendimiento",
+      icon: Target,
+      actions: <IndicatorsFilters />
+    });
+  }, [setHeaderConfig]);
 
   // 🎯 URL-FIRST: Leer parámetros de la URL
   useEffect(() => {
