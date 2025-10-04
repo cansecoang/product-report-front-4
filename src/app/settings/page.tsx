@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Dialog,
   DialogContent,
@@ -34,20 +35,76 @@ interface CrudModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
+  countries?: Country[];
+  outputs?: Output[];
 }
 
-function CrudModal({ type, item, isOpen, onClose, onSave }: CrudModalProps) {
+function CrudModal({ type, item, isOpen, onClose, onSave, countries, outputs }: CrudModalProps) {
   type CrudItem = Partial<Organization & Country & WorkPackage & WorkingGroup & Status & Phase & Indicator>;
   const [formData, setFormData] = useState<CrudItem>({})
 
+  // Debug: Ver qué outputs recibe el modal
+  useEffect(() => {
+    console.log('🔔 CrudModal recibió outputs:', outputs?.length || 0, outputs)
+  }, [outputs])
+
   useEffect(() => {
     if (item) {
+      console.log('📝 Editando item:', item)
       setFormData(item)
     } else {
       // Reset form for new item
       setFormData({})
     }
   }, [item])
+
+  const mapFormDataToAPI = (
+    type: string,
+    formData: Partial<Organization & Country & WorkPackage & WorkingGroup & Status & Phase & Indicator>
+  ) => {
+    switch (type) {
+      case 'organization':
+        return {
+          name: formData.organization_name,
+          description: formData.organization_description,
+          type: formData.organization_type,
+          country: formData.organization_country,
+        }
+      case 'country':
+        return {
+          name: formData.country_name,
+        }
+      case 'workpackage':
+        return {
+          name: formData.workpackage_name,
+          description: formData.workpackage_description,
+        }
+      case 'workinggroup':
+        return {
+          name: formData.workinggroup_name,
+          description: formData.workinggroup_description,
+        }
+      case 'status':
+        return {
+          name: formData.status_name,
+          description: formData.status_description,
+        }
+      case 'phase':
+        return {
+          name: formData.phase_name,
+          description: formData.phase_description,
+        }
+      case 'indicator':
+        return {
+          name: formData.indicator_name,
+          code: formData.indicator_code,
+          description: formData.indicator_description,
+          output_number: formData.output_number,
+        }
+      default:
+        return formData
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,18 +113,25 @@ function CrudModal({ type, item, isOpen, onClose, onSave }: CrudModalProps) {
       const endpoint = getEndpoint(type)
       const method = item ? 'PUT' : 'POST'
       
+      const mappedData = mapFormDataToAPI(type, formData)
+      const requestData = item ? { ...mappedData, id: getItemId(item, type) } : mappedData
+      console.log('Sending data:', requestData)
+      console.log('Endpoint:', endpoint)
+      console.log('Method:', method)
+
       const response = await fetch(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(item ? { ...formData, id: getItemId(item, type) } : formData),
+        body: JSON.stringify(requestData),
       })
 
       if (response.ok) {
         onSave()
       } else {
-        console.error('Error saving item')
+        const errorData = await response.text()
+        console.error('Error saving item:', response.status, errorData)
       }
     } catch (error) {
       console.error('Error:', error)
@@ -127,7 +191,7 @@ function CrudModal({ type, item, isOpen, onClose, onSave }: CrudModalProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {renderFormFields(type, formData, setFormData)}
+            {renderFormFields(type, formData, setFormData, countries, outputs)}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
@@ -146,8 +210,12 @@ function CrudModal({ type, item, isOpen, onClose, onSave }: CrudModalProps) {
 function renderFormFields(
   type: string,
   formData: Partial<Organization & Country & WorkPackage & WorkingGroup & Status & Phase & Indicator>,
-  setFormData: (data: Partial<Organization & Country & WorkPackage & WorkingGroup & Status & Phase & Indicator>) => void
+  setFormData: (data: Partial<Organization & Country & WorkPackage & WorkingGroup & Status & Phase & Indicator>) => void,
+  countries?: Country[],
+  outputs?: Output[]
 ) {
+  console.log('🎨 Rendering form for type:', type, 'outputs:', outputs?.length || 0)
+  
   const handleChange = (field: string, value: string) => {
     setFormData({
       ...formData,
@@ -159,7 +227,7 @@ function renderFormFields(
     case 'organization':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="org-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -169,25 +237,40 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="org-type" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Type</Label>
-            <Input
-              id="type"
+            <Select
               value={formData.organization_type || ''}
-              onChange={(e) => handleChange('organization_type', e.target.value)}
-              className="col-span-3"
-            />
+              onValueChange={(value) => handleChange('organization_type', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="S">S - Secondary</SelectItem>
+                <SelectItem value="M">M - Main</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="org-country" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="country" className="text-right">Country</Label>
-            <Input
-              id="country"
+            <Select
               value={formData.organization_country || ''}
-              onChange={(e) => handleChange('organization_country', e.target.value)}
-              className="col-span-3"
-            />
+              onValueChange={(value) => handleChange('organization_country', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries?.map((country) => (
+                  <SelectItem key={country.country_id} value={country.country_name}>
+                    {country.country_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="org-description" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -201,7 +284,7 @@ function renderFormFields(
     case 'country':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="country-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -211,21 +294,12 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="code" className="text-right">Code</Label>
-            <Input
-              id="code"
-              value={formData.country_code || ''}
-              onChange={(e) => handleChange('country_code', e.target.value)}
-              className="col-span-3"
-            />
-          </div>
         </>
       )
     case 'workpackage':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="wp-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -235,7 +309,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="wp-desc" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -249,7 +323,7 @@ function renderFormFields(
     case 'workinggroup':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="wg-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -259,7 +333,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="wg-desc" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -273,7 +347,7 @@ function renderFormFields(
     case 'status':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="status-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -283,7 +357,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="status-desc" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -292,22 +366,12 @@ function renderFormFields(
               className="col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="color" className="text-right">Color</Label>
-            <Input
-              id="color"
-              type="color"
-              value={formData.status_color || '#000000'}
-              onChange={(e) => handleChange('status_color', e.target.value)}
-              className="col-span-3"
-            />
-          </div>
         </>
       )
     case 'phase':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="phase-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -317,7 +381,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="phase-desc" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -331,7 +395,7 @@ function renderFormFields(
     case 'indicator':
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="ind-name" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
             <Input
               id="name"
@@ -341,7 +405,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="ind-code" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="code" className="text-right">Code</Label>
             <Input
               id="code"
@@ -351,7 +415,7 @@ function renderFormFields(
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div key="ind-desc" className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Textarea
               id="description"
@@ -360,23 +424,35 @@ function renderFormFields(
               className="col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="target" className="text-right">Target</Label>
-            <Input
-              id="target"
-              value={formData.indicator_target || ''}
-              onChange={(e) => handleChange('indicator_target', e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="unit" className="text-right">Unit</Label>
-            <Input
-              id="unit"
-              value={formData.indicator_unit || ''}
-              onChange={(e) => handleChange('indicator_unit', e.target.value)}
-              className="col-span-3"
-            />
+          <div key="ind-output" className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="output_number" className="text-right">Output</Label>
+            <Select
+              value={formData.output_number ? String(formData.output_number) : ''}
+              onValueChange={(value) => {
+                console.log('📝 Output seleccionado:', value)
+                handleChange('output_number', value)
+              }}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select output" />
+              </SelectTrigger>
+              <SelectContent>
+                {!outputs || outputs.length === 0 ? (
+                  <SelectItem value="no-data" disabled>
+                    No outputs available
+                  </SelectItem>
+                ) : (
+                  outputs.map((output) => (
+                    <SelectItem 
+                      key={output.output_id} 
+                      value={String(output.output_number)}
+                    >
+                      {output.output_name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </>
       )
@@ -424,6 +500,12 @@ interface Country {
   country_code?: string;
 }
 
+interface Output {
+  output_id: number;
+  output_number: string;
+  output_name: string;
+}
+
 interface WorkPackage {
   workpackage_id: number;
   workpackage_name: string;
@@ -445,6 +527,7 @@ export default function SettingsPage() {
   const [statuses, setStatuses] = useState<Status[]>([])
   const [phases, setPhases] = useState<Phase[]>([])
   const [indicators, setIndicators] = useState<Indicator[]>([])
+  const [outputs, setOutputs] = useState<Output[]>([])
   
   // State para loading
   const [loading, setLoading] = useState({
@@ -454,7 +537,8 @@ export default function SettingsPage() {
     workingGroups: false,
     statuses: false,
     phases: false,
-    indicators: false
+    indicators: false,
+    outputs: false
   })
 
   // State para modales
@@ -463,12 +547,17 @@ export default function SettingsPage() {
     Organization | Country | WorkPackage | WorkingGroup | Status | Phase | Indicator | null
   >(null)
 
+  // State para modal de confirmación de eliminación
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ type: string; id: number; name: string } | null>(null)
+
   // Función para eliminar items
   const handleDelete = async (type: string, id: number) => {
-    if (!confirm('Are you sure you want to delete this item?')) {
-      return
-    }
-
+    // Cerrar modal inmediatamente para mejor UX
+    setDeleteConfirmOpen(false)
+    const itemName = itemToDelete?.name
+    setItemToDelete(null)
+    
     try {
       const endpoint = getEndpoint(type)
       const response = await fetch(endpoint, {
@@ -489,12 +578,18 @@ export default function SettingsPage() {
         if (type === 'phase') loadPhases()
         if (type === 'indicator') loadIndicators()
       } else {
-        alert('Error deleting item')
+        alert(`Error deleting ${itemName || 'item'}`)
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Error deleting item')
+      alert(`Error deleting ${itemName || 'item'}`)
     }
+  }
+
+  // Función para abrir modal de confirmación de eliminación
+  const openDeleteConfirm = (type: string, id: number, name: string) => {
+    setItemToDelete({ type, id, name })
+    setDeleteConfirmOpen(true)
   }
 
   const getEndpoint = (type: string) => {
@@ -602,6 +697,23 @@ export default function SettingsPage() {
     }
   }
 
+  const loadOutputs = async () => {
+    setLoading(prev => ({ ...prev, outputs: true }))
+    try {
+      console.log('🔍 Cargando outputs...')
+      const response = await fetch('/api/outputs')
+      console.log('📡 Response status:', response.status)
+      const data = await response.json()
+      console.log('📦 Outputs data:', data)
+      setOutputs(data.outputs || [])
+      console.log('✅ Outputs cargados:', data.outputs?.length || 0)
+    } catch (error) {
+      console.error('❌ Error loading outputs:', error)
+    } finally {
+      setLoading(prev => ({ ...prev, outputs: false }))
+    }
+  }
+
   // Cargar datos al montar el componente
   useEffect(() => {
     loadOrganizations()
@@ -611,6 +723,7 @@ export default function SettingsPage() {
     loadStatuses()
     loadPhases()
     loadIndicators()
+    loadOutputs()
   }, [])
 
   return (
@@ -676,7 +789,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('organization', org.organization_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('organization', org.organization_id, org.organization_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -732,7 +845,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('country', country.country_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('country', country.country_id, country.country_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -786,7 +899,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('workpackage', wp.workpackage_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('workpackage', wp.workpackage_id, wp.workpackage_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -840,7 +953,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('workinggroup', wg.workinggroup_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('workinggroup', wg.workinggroup_id, wg.workinggroup_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -882,15 +995,7 @@ export default function SettingsPage() {
                   statuses.map((status) => (
                     <div key={status.status_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          {status.status_color && (
-                            <div 
-                              className={`w-3 h-3 rounded-full`}
-                              style={{ backgroundColor: status.status_color }}
-                            ></div>
-                          )}
-                          <p className="font-medium">{status.status_name}</p>
-                        </div>
+                        <p className="font-medium">{status.status_name}</p>
                         {status.status_description && (
                           <p className="text-sm text-muted-foreground">{status.status_description}</p>
                         )}
@@ -902,7 +1007,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('status', status.status_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('status', status.status_id, status.status_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -961,7 +1066,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('phase', phase.phase_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('phase', phase.phase_id, phase.phase_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -1007,9 +1112,11 @@ export default function SettingsPage() {
                           <p className="font-medium">{indicator.indicator_name}</p>
                           <Badge variant="outline">{indicator.indicator_code}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          Meta: {indicator.indicator_target} • Unidad: {indicator.indicator_unit}
-                        </p>
+                        {indicator.output_number && (
+                          <p className="text-sm text-muted-foreground">
+                            Output: {indicator.output_number}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button variant="ghost" size="sm" onClick={() => {
@@ -1018,7 +1125,7 @@ export default function SettingsPage() {
                         }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete('indicator', indicator.indicator_id)}>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteConfirm('indicator', indicator.indicator_id, indicator.indicator_name)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -1031,48 +1138,6 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{organizations.length}</div>
-            <p className="text-xs text-muted-foreground">{countries.length} countries</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Configured Statuses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statuses.length}</div>
-            <p className="text-xs text-muted-foreground">In use</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Defined Phases</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{phases.length}</div>
-            <p className="text-xs text-muted-foreground">All in use</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active Indicators</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{indicators.length}</div>
-            <p className="text-xs text-muted-foreground">Configured</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Modales para CRUD */}
       {openModal && (
@@ -1080,6 +1145,8 @@ export default function SettingsPage() {
           type={openModal}
           item={editingItem}
           isOpen={!!openModal}
+          countries={countries}
+          outputs={outputs}
           onClose={() => {
             setOpenModal(null)
             setEditingItem(null)
@@ -1099,6 +1166,42 @@ export default function SettingsPage() {
           }}
         />
       )}
+
+      {/* Modal de confirmación de eliminación */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{itemToDelete?.name}</strong>?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false)
+                setItemToDelete(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive"
+              onClick={() => {
+                if (itemToDelete) {
+                  handleDelete(itemToDelete.type, itemToDelete.id)
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   )

@@ -27,17 +27,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, description, color } = await request.json();
+    const { name, description } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
-        INSERT INTO status (status_name, status_description, status_color)
-        VALUES ($1, $2, $3)
+        INSERT INTO status (status_name, status_description)
+        VALUES ($1, $2)
         RETURNING *
       `;
       
-      const result = await client.query(query, [name, description, color]);
+      const result = await client.query(query, [name, description]);
       
       return NextResponse.json({
         success: true,
@@ -58,16 +58,16 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, name, description, color } = await request.json();
+    const { id, name, description } = await request.json();
     const client = await pool.connect();
     
     try {
         const query = `
           UPDATE status
-          SET status_name = $1, status_description = $2, status_color = $3
-          WHERE status_id = $4
+          SET status_name = $1, status_description = $2
+          WHERE status_id = $3
           RETURNING *
-        `;      const result = await client.query(query, [name, description, color, id]);
+        `;      const result = await client.query(query, [name, description, id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(

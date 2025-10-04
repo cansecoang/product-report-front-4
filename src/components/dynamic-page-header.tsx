@@ -138,7 +138,7 @@ function MatrixFiltersInline({ workPackages }: { workPackages: WorkPackage[] }) 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Outputs</SelectItem>
-            {outputs.map((output) => (
+            {outputs?.map((output) => (
               <SelectItem key={output.outputNumber} value={output.outputNumber}>
                 {output.name}
               </SelectItem>
@@ -159,7 +159,7 @@ function MatrixFiltersInline({ workPackages }: { workPackages: WorkPackage[] }) 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All WPs</SelectItem>
-            {workPackages.map((wp) => (
+            {workPackages?.map((wp) => (
               <SelectItem key={wp.id} value={wp.id}>
                 {wp.name}
               </SelectItem>
@@ -181,7 +181,7 @@ function MatrixFiltersInline({ workPackages }: { workPackages: WorkPackage[] }) 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Countries</SelectItem>
-            {countries.map((country) => (
+            {countries?.filter(country => country?.id).map((country) => (
               <SelectItem key={country.id} value={country.id.toString()}>
                 {country.name}
               </SelectItem>

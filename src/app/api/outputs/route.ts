@@ -7,19 +7,17 @@ export async function GET() {
     
     try {
       const query = `
-        SELECT DISTINCT output_number
-        FROM indicators
-        WHERE output_number IS NOT NULL 
+        SELECT *
+        FROM outputs
         ORDER BY output_number
       `;
       
       const result = await client.query(query);
       
+      console.log('Outputs loaded:', result.rows);
+      
       return NextResponse.json({
-        outputs: result.rows.map(row => ({
-          outputNumber: row.output_number.toString(),
-          name: `Output ${row.output_number}`
-        }))
+        outputs: result.rows
       });
       
     } catch (error) {

@@ -43,17 +43,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { code, name, description, output_number, target, unit } = await request.json();
+    const { code, name, description, output_number } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
-        INSERT INTO indicators (indicator_code, indicator_name, indicator_description, output_number, indicator_target, indicator_unit)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO indicators (indicator_code, indicator_name, indicator_description, output_number)
+        VALUES ($1, $2, $3, $4)
         RETURNING *
       `;
       
-      const result = await client.query(query, [code, name, description, output_number, target, unit]);
+      const result = await client.query(query, [code, name, description, output_number]);
       
       return NextResponse.json({
         success: true,
@@ -74,19 +74,19 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, code, name, description, output_number, target, unit } = await request.json();
+    const { id, code, name, description, output_number } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
         UPDATE indicators 
         SET indicator_code = $1, indicator_name = $2, indicator_description = $3, 
-            output_number = $4, indicator_target = $5, indicator_unit = $6
-        WHERE indicator_id = $7
+            output_number = $4
+        WHERE indicator_id = $5
         RETURNING *
       `;
       
-      const result = await client.query(query, [code, name, description, output_number, target, unit, id]);
+      const result = await client.query(query, [code, name, description, output_number, id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(

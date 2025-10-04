@@ -27,17 +27,31 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, code } = await request.json();
+    const body = await request.json();
+    console.log('POST /api/countries - Body received:', body);
+    
+    const { name } = body;
+    
+    if (!name) {
+      console.error('POST /api/countries - Name is missing');
+      return NextResponse.json(
+        { error: 'Country name is required' },
+        { status: 400 }
+      );
+    }
+    
     const client = await pool.connect();
     
     try {
       const query = `
-        INSERT INTO countries (country_name, country_code)
-        VALUES ($1, $2)
+        INSERT INTO countries (country_name)
+        VALUES ($1)
         RETURNING *
       `;
       
-      const result = await client.query(query, [name, code]);
+      console.log('POST /api/countries - Executing query with name:', name);
+      const result = await client.query(query, [name]);
+      console.log('POST /api/countries - Success:', result.rows[0]);
       
       return NextResponse.json({
         success: true,
@@ -58,18 +72,18 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, name, code } = await request.json();
+    const { id, name } = await request.json();
     const client = await pool.connect();
     
     try {
       const query = `
         UPDATE countries 
-        SET country_name = $1, country_code = $2
-        WHERE country_id = $3
+        SET country_name = $1
+        WHERE country_id = $2
         RETURNING *
       `;
       
-      const result = await client.query(query, [name, code, id]);
+      const result = await client.query(query, [name, id]);
       
       if (result.rows.length === 0) {
         return NextResponse.json(
