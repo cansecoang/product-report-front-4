@@ -14,7 +14,7 @@ export default async function ProductLayout({
   return (
     <div className="flex flex-col h-full">
       {/* Setup del header dinámico para todas las rutas de productos */}
-      <ProductHeaderSetup workPackages={workPackages} />
+      {/* <ProductHeaderSetup workPackages={workPackages} /> */}
       
       {/* Contenido principal (SCROLLABLE por defecto, pero el Gantt manejará su propio overflow) */}
       <div className="flex-1 overflow-auto">

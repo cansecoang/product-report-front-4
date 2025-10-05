@@ -16,8 +16,8 @@ import {
 
 // Interfaces para los filtros
 interface Output {
-  outputNumber: string;
-  name: string;
+  output_number: string;
+  output_name: string;
 }
 
 interface WorkPackage {
@@ -50,6 +50,7 @@ export function IndicatorsFilters() {
       try {
         const response = await fetch('/api/outputs');
         const data = await response.json();
+        console.log('📊 Outputs loaded in filters:', data.outputs);
         setOutputs(data.outputs || []);
       } catch (error) {
         console.error('❌ Error fetching outputs:', error);
@@ -60,6 +61,7 @@ export function IndicatorsFilters() {
       try {
         const response = await fetch('/api/work-packages');
         const data = await response.json();
+        console.log('📦 Work packages loaded in filters:', data.workpackages);
         setWorkPackages(data.workpackages || []);
       } catch (error) {
         console.error('❌ Error fetching work packages:', error);
@@ -108,8 +110,8 @@ export function IndicatorsFilters() {
           </SelectTrigger>
           <SelectContent>
             {outputs.map((output) => (
-              <SelectItem key={output.outputNumber} value={output.outputNumber}>
-                {output.name}
+              <SelectItem key={output.output_number} value={output.output_number}>
+                {output.output_name}
               </SelectItem>
             ))}
           </SelectContent>

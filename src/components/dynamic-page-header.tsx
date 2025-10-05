@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useHeader } from "@/contexts/HeaderContext";
 import { usePathname } from "next/navigation";
-import AddProductModal from "@/components/add-product-modal-new";
+import AddProductWizard from "@/components/add-product-wizard-complete";
 import {
   Select,
   SelectContent,
@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProductMatrix } from "@/contexts/ProductMatrixContext";
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 
 interface WorkPackage {
@@ -31,6 +33,7 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
   const { title, actions } = useHeader();
   const pathname = usePathname();
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const queryClient = useQueryClient();
   
   // Mostrar botón Add Product en la ruta /product y sus subrutas
   const showAddProduct = pathname.startsWith('/product');
@@ -42,11 +45,15 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
   const displayTitle = pathname === '/' ? 'Dashboard' : title;
 
   const handleProductAdded = () => {
-    // Aquí puedes agregar lógica para refrescar la lista de productos
-    // Por ahora solo cerramos el modal
     setIsAddProductModalOpen(false);
-    // Recargar la página para mostrar el nuevo producto
-    window.location.reload();
+    
+    // ✅ Invalidar cache de React Query para refrescar datos
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    
+    // ✅ Notificación profesional
+    toast.success('Producto creado', {
+      description: 'El producto ha sido agregado exitosamente'
+    });
   };
 
   return (
@@ -106,8 +113,8 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
         </div>
       </div>
 
-      {/* Modal para agregar producto */}
-      <AddProductModal
+      {/* Wizard para agregar producto */}
+      <AddProductWizard
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
         onProductAdded={handleProductAdded}
@@ -130,6 +137,10 @@ function MatrixFiltersInline({ workPackages }: { workPackages: WorkPackage[] }) 
     handleOutputChange,
     handleCountryChange,
   } = useProductMatrix();
+
+  console.log('🔍 MatrixFiltersInline - outputs:', outputs);
+  console.log('🔍 MatrixFiltersInline - outputs length:', outputs?.length);
+  console.log('🔍 MatrixFiltersInline - isLoadingOutputs:', isLoadingOutputs);
 
   return (
     <div className="flex items-center gap-2">

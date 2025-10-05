@@ -3,6 +3,9 @@ import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ConditionalLayout } from "@/components/conditional-layout"
+import { QueryProvider } from "@/providers/query-provider"
+import { Toaster } from "@/components/ui/toast"
+import { CommandPalette } from "@/components/command-palette"
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -31,11 +34,15 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
-        <AuthProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+            <CommandPalette />
+            <Toaster />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

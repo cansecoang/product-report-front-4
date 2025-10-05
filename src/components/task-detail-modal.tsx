@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from 'sonner';
 
 interface Task {
   id: number;
@@ -105,11 +106,15 @@ function TaskDetailModal({ taskId, isOpen, onClose, onTaskUpdated, onTaskDeleted
       } else {
         const errorData = await response.json();
         console.error('Error fetching task details:', errorData.error);
-        alert(`Error: ${errorData.error || 'Failed to fetch task details'}`);
+        toast.error('Error al cargar tarea', {
+          description: errorData.error || 'No se pudieron cargar los detalles de la tarea'
+        });
       }
     } catch (error) {
       console.error('Error fetching task details:', error);
-      alert('Error al cargar los detalles de la tarea');
+      toast.error('Error de conexión', {
+        description: 'No se pudo conectar con el servidor. Verifica tu internet.'
+      });
     } finally {
       setLoading(false);
     }

@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import AddTaskModal from "@/components/add-task-modal";
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export function FloatingTaskButton() {
   const searchParams = useSearchParams();
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const queryClient = useQueryClient();
   
   useEffect(() => {
     // Verificar si hay un producto seleccionado en los parámetros de URL
@@ -27,9 +30,16 @@ export function FloatingTaskButton() {
   };
 
   const handleTaskAdded = () => {
-    // Cerrar el modal y recargar para mostrar la nueva tarea
     setIsAddTaskModalOpen(false);
-    window.location.reload();
+    
+    // ✅ Invalidar cache para refrescar tareas
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['product-tasks', selectedProduct] });
+    
+    // ✅ Notificación profesional
+    toast.success('Tarea creada', {
+      description: 'La tarea ha sido agregada exitosamente'
+    });
   };
 
   return (

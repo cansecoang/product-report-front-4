@@ -57,6 +57,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3"; // 📊 D3.js - biblioteca para manipulación de datos y visualizaciones
 import TaskDetailModal from "@/components/task-detail-modal";
 import AddTaskModal from "@/components/add-task-modal";
+import { toast } from 'sonner';
 
 // 🎨 Definimos los colores para cada fase del proyecto
 // Esto nos permite mantener consistencia visual en todo el chart
@@ -317,7 +318,10 @@ const GanttChart = ({ tasks, refreshData }: GanttChartProps) => {
     
     if (!isInDomain) {
       console.log('❌ ERROR: Fecha actual fuera del dominio');
-      alert(`La fecha actual (${today.toLocaleDateString()}) está fuera del rango del proyecto (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`);
+      toast.warning('Fecha fuera de rango', {
+        description: `La fecha actual está fuera del rango del proyecto (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`,
+        duration: 4000
+      });
       return;
     }
     

@@ -101,13 +101,18 @@ export function ProductMatrixProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error('Failed to fetch outputs');
       const data = await response.json();
       
+      console.log('📦 Raw outputs from API:', data.outputs);
+      
       // Transformar de formato DB a formato camelCase
       const transformedOutputs = (data.outputs || []).map((output: OutputDB) => ({
         outputNumber: output.output_number,
         name: output.output_name
       }));
       
+      console.log('✅ Transformed outputs:', transformedOutputs);
+      
       setOutputs(transformedOutputs);
+      console.log('💾 Outputs set in state, length:', transformedOutputs.length);
     } catch (error) {
       console.error('Error fetching outputs:', error);
       setOutputs([]);
@@ -159,6 +164,12 @@ export function ProductMatrixProvider({ children }: { children: ReactNode }) {
     fetchOutputs();
     fetchCountries();
   }, [fetchOutputs, fetchCountries]);
+
+  // Log cuando outputs cambia
+  useEffect(() => {
+    console.log('🔄 Outputs state changed:', outputs);
+    console.log('🔄 Outputs count:', outputs.length);
+  }, [outputs]);
 
   // Cargar matriz inicial con todos los productos (solo una vez)
   useEffect(() => {

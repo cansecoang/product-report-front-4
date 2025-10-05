@@ -27,6 +27,7 @@ import {
   Trash2,
   Loader2
 } from "lucide-react"
+import { toast } from "sonner"
 
 // Componente Modal CRUD
 interface CrudModalProps {
@@ -109,6 +110,19 @@ function CrudModal({ type, item, isOpen, onClose, onSave, countries, outputs }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    const typeNames: { [key: string]: string } = {
+      organization: 'Organización',
+      country: 'País',
+      workpackage: 'Paquete de Trabajo',
+      workinggroup: 'Grupo de Trabajo',
+      status: 'Estado',
+      phase: 'Fase',
+      indicator: 'Indicador',
+    }
+    
+    const typeName = typeNames[type] || 'item'
+    const action = item ? 'actualizado' : 'creado'
+    
     try {
       const endpoint = getEndpoint(type)
       const method = item ? 'PUT' : 'POST'
@@ -128,13 +142,22 @@ function CrudModal({ type, item, isOpen, onClose, onSave, countries, outputs }: 
       })
 
       if (response.ok) {
+        toast.success(`${typeName} ${action}`, {
+          description: `Los cambios se han guardado exitosamente`
+        })
         onSave()
       } else {
         const errorData = await response.text()
         console.error('Error saving item:', response.status, errorData)
+        toast.error(`Error al guardar ${typeName.toLowerCase()}`, {
+          description: `No se pudo guardar. Verifica los datos e intenta de nuevo.`
+        })
       }
     } catch (error) {
       console.error('Error:', error)
+      toast.error('Error de conexión', {
+        description: 'No se pudo conectar con el servidor. Verifica tu internet.'
+      })
     }
   }
 
@@ -579,12 +602,20 @@ export default function SettingsPage() {
         if (type === 'status') loadStatuses()
         if (type === 'phase') loadPhases()
         if (type === 'indicator') loadIndicators()
+        
+        toast.success('Eliminado exitosamente', {
+          description: `${itemName} ha sido eliminado del sistema`
+        })
       } else {
-        alert(`Error deleting ${itemName || 'item'}`)
+        toast.error('Error al eliminar', {
+          description: `No se pudo eliminar ${itemName}. Por favor intenta de nuevo.`
+        })
       }
     } catch (error) {
       console.error('Error:', error)
-      alert(`Error deleting ${itemName || 'item'}`)
+      toast.error('Error al eliminar', {
+        description: `Ocurrió un error al eliminar ${itemName}. Verifica tu conexión.`
+      })
     }
   }
 

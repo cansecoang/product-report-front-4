@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MetricsSkeleton, CardSkeleton } from "@/components/loading-states";
 
 import {
   Dialog,
@@ -32,8 +33,8 @@ import { ProductDetailsModal } from "@/components/product-details-modal";
 
 // 🎯 NEW UX-FOCUSED INTERFACES
 interface Output {
-  outputNumber: string;
-  name: string;
+  output_number: string;
+  output_name: string;
 }
 
 interface WorkPackage {
@@ -490,13 +491,13 @@ function IndicatorsContent() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {outputs.map((output) => (
                   <Button
-                    key={output.outputNumber}
+                    key={output.output_number}
                     variant="outline"
                     className="p-4 h-auto text-left hover:border-blue-500 hover:bg-blue-50"
-                    onClick={() => handleOutputSelect(output.outputNumber)}
+                    onClick={() => handleOutputSelect(output.output_number)}
                   >
                     <div>
-                      <div className="font-medium text-gray-900">{output.name}</div>
+                      <div className="font-medium text-gray-900">{output.output_name}</div>
                       <div className="text-xs text-gray-500 mt-1">Ver indicadores</div>
                     </div>
                   </Button>
@@ -505,10 +506,15 @@ function IndicatorsContent() {
             </div>
           </div>
         ) : loading ? (
-          // 🎯 ESTADO DE CARGA
-          <div className="text-center py-12">
-            <Activity className="mx-auto h-8 w-8 text-blue-500 animate-spin mb-4" />
-            <div className="text-lg font-medium text-gray-900">Cargando indicadores...</div>
+          // 🎯 ESTADO DE CARGA PROFESIONAL
+          <div className="space-y-6">
+            <MetricsSkeleton count={4} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
           </div>
         ) : outputData ? (
           // 🎯 VISTA PRINCIPAL: Indicadores del output seleccionado
@@ -534,19 +540,19 @@ function IndicatorsContent() {
 
               {/* Métricas resumen */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <div key="total-indicators" className="bg-blue-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">{outputData.summary.total_indicators}</div>
                   <div className="text-sm text-blue-700">Indicadores</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4 text-center">
+                <div key="completed-tasks" className="bg-green-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-green-600">{outputData.summary.completed_tasks}</div>
                   <div className="text-sm text-green-700">Tareas Completadas</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                <div key="total-tasks" className="bg-gray-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-gray-600">{outputData.summary.total_tasks}</div>
                   <div className="text-sm text-gray-700">Total Tareas</div>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4 text-center">
+                <div key="overdue-tasks" className="bg-red-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-red-600">{outputData.summary.overdue_tasks}</div>
                   <div className="text-sm text-red-700">Tareas Vencidas</div>
                 </div>
@@ -555,8 +561,8 @@ function IndicatorsContent() {
 
             {/* Grid de indicadores */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {outputData.indicators.map((indicator, index) => (
-                <IndicatorDetailModal key={index} indicator={indicator} onProductClick={handleProductClick} />
+              {outputData.indicators.map((indicator) => (
+                <IndicatorDetailModal key={indicator.indicator_id} indicator={indicator} onProductClick={handleProductClick} />
               ))}
             </div>
 

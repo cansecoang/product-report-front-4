@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ProductDetailModal } from "@/components/product-detail-modal";
 import { useProductMatrix } from "@/contexts/ProductMatrixContext";
+import { TableSkeleton } from "@/components/loading-states";
 
 interface Country {
   id: number;
@@ -72,9 +73,7 @@ export function ProductMatrix() {
     <div className="space-y-6">
       {/* Matrix Table */}
       {isLoadingMatrix && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-lg text-gray-600">Loading matrix...</div>
-        </div>
+        <TableSkeleton rows={8} columns={6} />
       )}
 
       {matrixData && !isLoadingMatrix && (
