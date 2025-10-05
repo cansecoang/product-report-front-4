@@ -247,8 +247,8 @@ function renderFormFields(
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="S">S - Secondary</SelectItem>
-                <SelectItem value="M">M - Main</SelectItem>
+                <SelectItem key="type-s" value="S">S - Secondary</SelectItem>
+                <SelectItem key="type-m" value="M">M - Main</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -262,7 +262,7 @@ function renderFormFields(
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
-                {countries?.map((country) => (
+                {countries?.filter(c => c?.country_id).map((country) => (
                   <SelectItem key={country.country_id} value={country.country_name}>
                     {country.country_name}
                   </SelectItem>
@@ -443,7 +443,7 @@ function renderFormFields(
                   </SelectItem>
                 ) : (
                   <>
-                    {outputs.map((output) => (
+                    {outputs.filter(o => o?.output_id).map((output) => (
                       <SelectItem 
                         key={output.output_id} 
                         value={String(output.output_number)}
@@ -771,7 +771,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  organizations.map((org) => (
+                  organizations.filter(org => org?.organization_id).map((org) => (
                     <div key={org.organization_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
@@ -830,7 +830,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  countries.map((country) => (
+                  countries.filter(c => c?.country_id).map((country) => (
                     <div key={country.country_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
@@ -886,7 +886,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  workPackages.map((wp) => (
+                  workPackages.filter(wp => wp?.workpackage_id).map((wp) => (
                     <div key={wp.workpackage_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <p className="font-medium">{wp.workpackage_name}</p>
@@ -940,7 +940,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  workingGroups.map((wg) => (
+                  workingGroups.filter(wg => wg?.workinggroup_id).map((wg) => (
                     <div key={wg.workinggroup_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <p className="font-medium">{wg.workinggroup_name}</p>
@@ -994,7 +994,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  statuses.map((status) => (
+                  statuses.filter(s => s?.status_id).map((status) => (
                     <div key={status.status_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <p className="font-medium">{status.status_name}</p>
@@ -1048,7 +1048,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  phases.map((phase, index) => (
+                  phases.filter(p => p?.phase_id).map((phase, index) => (
                     <div key={phase.phase_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
@@ -1107,7 +1107,7 @@ export default function SettingsPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  indicators.map((indicator) => (
+                  indicators.filter(i => i?.indicator_id).map((indicator) => (
                     <div key={indicator.indicator_id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">

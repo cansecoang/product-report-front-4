@@ -2,6 +2,14 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 
+// Formato de DB (snake_case)
+interface OutputDB {
+  output_id: number;
+  output_number: string;
+  output_name: string;
+}
+
+// Formato para frontend (camelCase)
 interface Output {
   outputNumber: string;
   name: string;
@@ -92,7 +100,14 @@ export function ProductMatrixProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/outputs');
       if (!response.ok) throw new Error('Failed to fetch outputs');
       const data = await response.json();
-      setOutputs(data.outputs || []);
+      
+      // Transformar de formato DB a formato camelCase
+      const transformedOutputs = (data.outputs || []).map((output: OutputDB) => ({
+        outputNumber: output.output_number,
+        name: output.output_name
+      }));
+      
+      setOutputs(transformedOutputs);
     } catch (error) {
       console.error('Error fetching outputs:', error);
       setOutputs([]);
