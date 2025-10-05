@@ -16,8 +16,14 @@ export async function GET() {
       
       console.log('Outputs loaded:', result.rows);
       
+      // Transformar los datos al formato esperado por el frontend
+      const transformedOutputs = result.rows.map(row => ({
+        outputNumber: row.output_number,
+        name: row.output_name
+      }));
+      
       return NextResponse.json({
-        outputs: result.rows
+        outputs: transformedOutputs
       });
       
     } catch (error) {

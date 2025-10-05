@@ -442,14 +442,16 @@ function renderFormFields(
                     No outputs available
                   </SelectItem>
                 ) : (
-                  outputs.map((output) => (
-                    <SelectItem 
-                      key={output.output_id} 
-                      value={String(output.output_number)}
-                    >
-                      {output.output_name}
-                    </SelectItem>
-                  ))
+                  <>
+                    {outputs.map((output) => (
+                      <SelectItem 
+                        key={output.output_id} 
+                        value={String(output.output_number)}
+                      >
+                        {output.output_name}
+                      </SelectItem>
+                    ))}
+                  </>
                 )}
               </SelectContent>
             </Select>

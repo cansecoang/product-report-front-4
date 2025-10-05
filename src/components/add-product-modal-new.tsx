@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -326,10 +327,10 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
           <h2 className="text-2xl font-bold">Crear Nuevo Producto</h2>
           <Button onClick={handleClose} variant="ghost" size="sm">
             <X className="h-4 w-4" />
@@ -758,4 +759,6 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
       </div>
     </div>
   );
+
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

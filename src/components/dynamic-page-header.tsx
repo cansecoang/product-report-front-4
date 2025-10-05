@@ -32,8 +32,8 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
   const pathname = usePathname();
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   
-  // Mostrar botón Add Product solo en subrutas de productos (NO en /product raíz)
-  const showAddProduct = pathname.startsWith('/product') && pathname !== '/product';
+  // Mostrar botón Add Product en la ruta /product y sus subrutas
+  const showAddProduct = pathname.startsWith('/product');
   
   // Mostrar dropdowns solo en la ruta /product (no en subrutas)
   const showMatrixFilters = pathname === '/product';
@@ -50,7 +50,7 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
   };
 
   return (
-    <div className="bg-background border-b px-4 py-3 sticky top-0 z-10">
+    <div className="bg-background border-b px-4 py-3 sticky top-0 z-[5]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
@@ -64,8 +64,22 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
           {/* Solo mostrar controles si NO estamos en la ruta raíz / */}
           {pathname !== '/' && (
             <>
-              {/* Controles de matriz SOLO para la ruta /product */}
-              {showMatrixFilters && <MatrixFiltersInline workPackages={workPackages} />}
+              {/* Controles de matriz para la ruta /product */}
+              {showMatrixFilters && (
+                <>
+                  <MatrixFiltersInline workPackages={workPackages} />
+                  {/* Botón Add Product en /product */}
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => setIsAddProductModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                </>
+              )}
               
               {/* Controles para otras rutas (NO /product) */}
               {!showMatrixFilters && (
@@ -73,7 +87,7 @@ export function DynamicPageHeader({ workPackages = [] }: DynamicPageHeaderProps)
                   {/* Actions/controls específicos de cada página */}
                   {actions && actions}
                   
-                  {/* Botón Add Product en otras rutas de productos (no en /product) */}
+                  {/* Botón Add Product en subrutas de productos */}
                   {showAddProduct && (
                     <Button 
                       variant="default" 

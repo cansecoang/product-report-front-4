@@ -221,7 +221,7 @@ export function CheckinNotifications() {
                 {/* Hoy */}
                 {checkinData.checkins.today.map((task) => (
                   <div
-                    key={`today-${task.task_id}`}
+                    key={`today-${task.task_id}-${task.checkin_type}`}
                     className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
                     onClick={() => handleCheckinClick(task)}
                   >
@@ -253,7 +253,7 @@ export function CheckinNotifications() {
                 {/* Mañana */}
                 {checkinData.checkins.tomorrow.map((task) => (
                   <div
-                    key={`tomorrow-${task.task_id}`}
+                    key={`tomorrow-${task.task_id}-${task.checkin_type}`}
                     className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
                     onClick={() => handleCheckinClick(task)}
                   >
@@ -285,7 +285,7 @@ export function CheckinNotifications() {
                 {/* Esta semana */}
                 {checkinData.checkins.this_week.map((task) => (
                   <div
-                    key={`week-${task.task_id}`}
+                    key={`week-${task.task_id}-${task.checkin_type}`}
                     className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
                     onClick={() => handleCheckinClick(task)}
                   >
@@ -317,7 +317,7 @@ export function CheckinNotifications() {
                 {/* Más adelante */}
                 {checkinData.checkins.later.slice(0, 5).map((task) => (
                   <div
-                    key={`later-${task.task_id}`}
+                    key={`later-${task.task_id}-${task.checkin_type}`}
                     className={`p-3 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getUrgencyColor(task.urgency_level)}`}
                     onClick={() => handleCheckinClick(task)}
                   >
