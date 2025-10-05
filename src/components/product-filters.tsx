@@ -23,8 +23,8 @@ interface WorkPackage {
 }
 
 interface Output {
-  outputNumber: string;
-  name: string;
+  output_number: string;
+  output_name: string;
 }
 
 interface Product {
@@ -77,13 +77,32 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
     router.push(newURL);
   }, [router, pathname]);
 
-  // Cargar outputs cuando cambia work package
+  // 🆕 Cargar todos los outputs al inicio (independiente del work package)
   useEffect(() => {
-    if (selectedWorkPackage) {
+    console.log('🔄 Loading all outputs...');
+    setLoadingOutputs(true);
+    fetch('/api/outputs')
+      .then(response => response.json())
+      .then(data => {
+        console.log('📊 All outputs loaded:', data.outputs);
+        setOutputs(data.outputs || []);
+        setLoadingOutputs(false);
+      })
+      .catch(error => {
+        console.error('❌ Error fetching outputs:', error);
+        setOutputs([]);
+        setLoadingOutputs(false);
+      });
+  }, []); // Solo ejecutar una vez al montar
+
+  // Cargar outputs cuando cambia work package (para filtrar por WP)
+  useEffect(() => {
+    if (selectedWorkPackage && selectedWorkPackage !== 'all') {
       setLoadingOutputs(true);
       fetch(`/api/outputs?workPackageId=${selectedWorkPackage}`)
         .then(response => response.json())
         .then(data => {
+          console.log('📊 Filtered outputs loaded:', data.outputs);
           setOutputs(data.outputs || []);
           setLoadingOutputs(false);
         })
@@ -91,8 +110,16 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
           console.error('❌ Error fetching outputs:', error);
           setLoadingOutputs(false);
         });
-    } else {
-      setOutputs([]);
+    } else if (selectedWorkPackage === 'all') {
+      // Si selecciona "Todos", recargar todos los outputs
+      fetch('/api/outputs')
+        .then(response => response.json())
+        .then(data => {
+          setOutputs(data.outputs || []);
+        })
+        .catch(error => {
+          console.error('❌ Error fetching outputs:', error);
+        });
     }
   }, [selectedWorkPackage]);
 
@@ -181,12 +208,12 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
       </div>
 
       {/* Filtro de Output */}
-      <div className="flex items-center gap-2 opacity-75">
-        <Target className="h-4 w-4 text-gray-400" />
+      <div className="flex items-center gap-2">
+        <Target className="h-4 w-4 text-gray-500" />
         <Select 
           value={selectedOutput || 'all'} 
           onValueChange={handleOutputChange}
-          disabled={!selectedWorkPackage || loadingOutputs}
+          disabled={loadingOutputs}
         >
           <SelectTrigger className="w-48 border border-gray-300">
             <SelectValue placeholder={loadingOutputs ? "Cargando..." : "Filtrar por Output (opcional)"} />
@@ -194,8 +221,8 @@ export function ProductFilters({ initialWorkPackages }: ProductFiltersProps) {
           <SelectContent>
             <SelectItem value="all">Todos los Outputs</SelectItem>
             {outputs.map((output) => (
-              <SelectItem key={output.outputNumber} value={output.outputNumber}>
-                {output.name}
+              <SelectItem key={output.output_number} value={output.output_number}>
+                {output.output_name}
               </SelectItem>
             ))}
           </SelectContent>
